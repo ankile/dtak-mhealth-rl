@@ -4,8 +4,8 @@ import numpy as np
 # setting up world
 ROWS = 5
 COLS = 5
-WIN_STATE = (4, 3)
-LOSE_STATE = (2, 4)
+WIN_STATE = (4, 4)
+LOSE_STATE = (2,3)
 START = (0, 0)
 DETERMINISTIC = True
 
@@ -19,8 +19,8 @@ world_actions = {
 class State:
     def __init__(self, state = START):
         self.board = np.zeros((ROWS, COLS))
-        self.board[LOSE_STATE[0], LOSE_STATE[1]] = -2
-        self.board[WIN_STATE[0], WIN_STATE[1]] = 1000
+        self.board[LOSE_STATE[0], LOSE_STATE[1]] = -1
+        self.board[WIN_STATE[0], WIN_STATE[1]] = 10
         self.state = state
         self.atEnd = False
         self.determine = DETERMINISTIC
@@ -109,16 +109,17 @@ class Agent:
     def value_iteration(self):
         while True:
             difference = 0
-            old_V = np.copy(self.V)
             for i in range(ROWS):
                 for j in range(COLS):
                     state = (i, j)
+                    self.State.state = state
+                    old_V = self.V[state]
                     v = self.updated_action_values()
 
                     self.policy[state] = np.argmax(v)
                     self.V[state] = self.State.give_reward(state) + self.gamma * np.max(v)
 
-                    difference = max(difference, np.abs(self.V[state] - old_V[state]))
+                    difference = max(difference, np.abs(old_V - self.V[state]))
             if difference < self.theta:
                 break
 
