@@ -2,10 +2,10 @@
 
 import numpy as np
 # setting up world
-ROWS = 5
+ROWS = 1
 COLS = 5
-WIN_STATE = (4, 4)
-LOSE_STATE = (2,3)
+WIN_STATE = (0, 4)
+LOSE_STATE = (0,2)
 START = (0, 0)
 DETERMINISTIC = True
 
@@ -19,8 +19,10 @@ world_actions = {
 class State:
     def __init__(self, state = START):
         self.board = np.zeros((ROWS, COLS))
-        self.board[LOSE_STATE[0], LOSE_STATE[1]] = -1
-        self.board[WIN_STATE[0], WIN_STATE[1]] = 10
+        self.lose_state_val = -2
+        self.win_state_val = 1000
+        self.board[LOSE_STATE[0], LOSE_STATE[1]] = self.lose_state_val
+        self.board[WIN_STATE[0], WIN_STATE[1]] = self.win_state_val
         self.state = state
         self.atEnd = False
         self.determine = DETERMINISTIC
@@ -56,24 +58,42 @@ class State:
             return self.state
 
     # visualize
-    def print_board(self):
-        world = []
-        for i in range(ROWS):
-            for j in range(COLS):
-                if (i, j) == START:
-                    world.append('o ')
-                elif (i, j) == WIN_STATE:
-                    world.append('X ')
-                elif (i, j) == LOSE_STATE:
-                    world.append('_ ')
-                elif self.board[i][j] < 0.0: # is an obstacle
-                    world.append('# ')
-                else:
-                    world.append('. ')
-            world.append('\n')
+    def visualize(self, world=True, policy=[]):
+        if len(policy) > 0:
+            grid = []
+            for i in range(ROWS):
+                for j in range(COLS):
+                    state = (i, j)
+                    if policy[state] == 0:
+                        grid.append(u'\u2191 ')
+                    elif policy[state] == 1:
+                        grid.append(u'\u2193 ')
+                    elif policy[state] == 2:
+                        grid.append(u'\u2190 ')
+                    else:
+                        grid.append(u'\u2192 ')
+                grid.append('\n')
 
-        toDraw = ''.join(world)
-        print(toDraw)
+            toDraw = ''.join(grid)
+            print(toDraw)
+
+        if world:
+            grid = []
+            for i in range(ROWS):
+                for j in range(COLS):
+                    state = (i, j)
+                    if state == START:
+                        grid.append('o ')
+                    elif state == WIN_STATE:
+                        grid.append('X ')
+                    elif state == LOSE_STATE:
+                        grid.append('_ ')
+                    else:
+                        grid.append('. ')
+                grid.append('\n')
+
+            toDraw = ''.join(grid)
+            print(toDraw)
 
 class Agent:
     def __init__(self):
@@ -90,7 +110,6 @@ class Agent:
         policy = np.zeros((ROWS, COLS))
         return policy
 
-    # implement Q(s, a) = SUM( P(s'|s, a)*[R(s, a, s') + gamma*U(s')] )
     def updated_action_values(self):
         vals = np.zeros(len(self.actions))
 
@@ -123,7 +142,6 @@ class Agent:
             if difference < self.theta:
                 break
 
-        print(self.policy, '\n')
         print(self.V)
 
     def take_action(self, action):
@@ -135,48 +153,13 @@ class Agent:
         self.State = State()
 
     def play(self, rounds = 5):
-        current_round = 0
         self.value_iteration()
-        # while current_round < rounds:
-        #     if self.State.atEnd:
-        #         # backprop
-        #         reward = self.State.give_reward()
-        #         self.state_values[self.State.state] = reward
-        #         print('Game End Reward: ', reward)
-
-        #         for state in reversed(self.states):
-        #             reward = self.state_values[state] + self.lr * (reward - self.state_values[state])
-        #             self.state_values[state] = round(reward, 3)
-        #         self.reset()
-        #         current_round += 1
-        #     else:
-        #         action = self.choose_action()
-        #         self.states.append(self.State.next_move(action))
-        #         print('current position {} action {}'.format(self.State.state, action))
-
-        #         # takes the action, reaches next state:
-        #         self.State = self.take_action(action)
-
-        #         # mark end
-        #         self.State.at_end()
-        #         print('next state ', self.State.state)
-        #         print ('----------------')
-
-    # def show_values(self):
-    #     for i in range(0, ROWS):
-    #         print ('----------------------------')
-    #         out = '| '
-    #         # for j in range(0, COLS):
-    #         #     out += str(self.state_values[(i, j)]).ljust(6) + '| '
-    #         print(out)
-    #     print ('----------------------------')
 
 
 if __name__ == '__main__':
     agent = Agent()
     agent.play()
-    agent.State.print_board()
-    # print(agent.show_values())
+    agent.State.visualize(policy=agent.policy)
 
 
 
