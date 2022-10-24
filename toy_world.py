@@ -2,10 +2,10 @@
 
 import numpy as np
 # setting up world
-ROWS = 1
-COLS = 5
-WIN_STATE = (0, 4)
-LOSE_STATE = (0,2)
+ROWS = 4
+COLS = 4
+WIN_STATE = (3, 3)
+LOSE_STATE = (1,2)
 START = (0, 0)
 DETERMINISTIC = True
 
@@ -18,9 +18,13 @@ world_actions = {
 
 class State:
     def __init__(self, state = START):
-        self.board = np.zeros((ROWS, COLS))
-        self.lose_state_val = -2
-        self.win_state_val = 1000
+        self.rows = ROWS
+        self.cols = COLS
+        self.lose_state = LOSE_STATE
+        self.win_state = WIN_STATE
+        self.board = np.zeros((self.rows, self.cols))
+        self.lose_state_val = -1
+        self.win_state_val = 10
         self.board[LOSE_STATE[0], LOSE_STATE[1]] = self.lose_state_val
         self.board[WIN_STATE[0], WIN_STATE[1]] = self.win_state_val
         self.state = state
@@ -110,6 +114,7 @@ class Agent:
         policy = np.zeros((ROWS, COLS))
         return policy
 
+    # Generating Q
     def updated_action_values(self):
         vals = np.zeros(len(self.actions))
 
@@ -169,7 +174,18 @@ if __name__ == '__main__':
 # - where observing states are
 # - change reward/where they are
     # frequency of reward
+    # distribution of reward
 # - obstacles/how to get around them
+
+# Experiment design:
+# - For each knob:
+    # Run world for each different type of agent
+        # vary the 'agent knob' by some amount to observe changes
+            # record different policies and behavior.
+
+
+# **NOTE: how to define the 'optimal' parameters (gamma, transition probs, etc.)**
+
 
 
 # ultimate goal:
