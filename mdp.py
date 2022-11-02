@@ -45,8 +45,8 @@ class Experiment_1D():
         for i in range(0, length-1):
             T[1, i, i+1] = 0.8
 
-        R = np.zeros((l, 2, l)) # R is sparse
-        R[l-2, 1, length-1] = 10
+        R = np.zeros((length, 2, length)) # R is sparse
+        R[length-2, 1, length-1] = 10
 
         return S, A, T, R, gamma
 
