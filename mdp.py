@@ -24,29 +24,29 @@ class Experiment_1D():
         S, A, T, R, gamma = self.make_MDP_params(l)
         self.mdp_1d = MDP(S, A, T, R, gamma)
 
-    def make_MDP_params(self, l):
-        S = np.arange(l)
+    def make_MDP_params(self, length):
+        S = np.arange(length)
         A = np.array((0, 1)) # 0 is left and 1 is right
         gamma = 0.8
 
         # always move right with 80% and stay with 20%, move left with 80% and stay with 20%
-        T = np.zeros((2, l, l))
+        T = np.zeros((2, length, length))
 
         # define T_action == 0 left
-        T[0] = np.diag(np.array([1] + [1 - gamma] * (l-2) + [1])) # (1-gamma)% chance of staying in the same state unless in state 0 or state l-1
+        T[0] = np.diag(np.array([1] + [0.2] * (length-2) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
 
         # Do this more slickly with a np.roll()
-        for i in range(1, l-1):
-            T[0, i, i-1] = gamma
+        for i in range(1, length-1):
+            T[0, i, i-1] = 0.8
 
-        T[1] = np.diag(np.array([1 - gamma] * (l-1) + [1])) # (1-gamma)% chance of staying in the same state unless in state 0 or state l-1
+        T[1] = np.diag(np.array([0.2] * (length-1) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
 
         # Do this more slickly with a np.roll()
-        for i in range(0, l-1):
-            T[1, i, i+1] = gamma
+        for i in range(0, length-1):
+            T[1, i, i+1] = 0.8
 
         R = np.zeros((l, 2, l)) # R is sparse
-        R[l-2, 1, l-1] = 10
+        R[l-2, 1, length-1] = 10
 
         return S, A, T, R, gamma
 
