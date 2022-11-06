@@ -18,9 +18,9 @@ class MDP():
         # assert T.sum(axis=0) == 1 # rows of T have to = 1
         assert R.shape == (len(self.S), len(self.A), len(self.S)) # state x action x next_state
 
-        # TODO: include value iteration, value per state, Q matrix, optimal policy
-    # implement Q(s, a) = SUM( P(s'|s, a)*[R(s, a, s') + gamma*U(s')] )
+    # value iteration is a little funky:
     def updated_action_values(self, state):
+
         vals = np.zeros(len(self.A))
 
         for action in self.A:
@@ -67,7 +67,7 @@ class MDP():
     def reset(self):
         self.state = self.S[0]
 
-## experiment test -- knob = length of 1d world:
+
 class Experiment_1D():
 
     def __init__(self, length, make_right_prob):
@@ -79,17 +79,15 @@ class Experiment_1D():
         A = np.array((0, 1)) # 0 is left and 1 is right
         gamma = 0.8
 
-        # always move right with 80% and stay with 20%, move left with 80% and stay with 20%
         T = np.zeros((2, length, length))
 
-        # define T_action == 0 left
         T[0] = np.diag(np.array([1] + [1 - make_right_prob] * (length-2) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
 
         # Do this more slickly with a np.roll()
         for i in range(1, length-1):
             T[0, i, i-1] = make_right_prob
 
-        T[1] = np.diag(np.array([0.2] * (length-1) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
+        T[1] = np.diag(np.array([1 - make_right_prob] * (length-1) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
 
         # Do this more slickly with a np.roll()
         for i in range(0, length-1):
@@ -108,36 +106,26 @@ class Experiment_1D():
         S, A, T, R, gamma = self.make_MDP_params(length = length, make_right_prob = make_right_prob)
         self.mdp_1d = MDP(S, A, T, R, gamma)
 
-    def overconfident(self, make_right_prob):
-        # probability is HIGHER than the "true"
-        S, A, T, R, gamma = self.make_MDP_params(make_right_prob)
-        self.mdp_1d = MDP(S, A, T, R, gamma)
-
-    # def reward(self):
-
+    def reward(self, R):
+        # TODO:
+        pass
 
 
 if __name__ == '__main__':
-    # example of actually running an exp:
-    # for length in range(100):
-    #     test_env = Experiment_1d(length)
-
-    # solve mdp, print optimal policy etc.
-
-    # checking if implementation is correct
     length = 5
     default_prob = 0.8
-    test = Experiment_1D(length, default_prob)
-    # print(test.mdp_1d.S)
-    # print(test.mdp_1d.A)
-    # print(test.mdp_1d.T)
-    # print(test.mdp_1d.R[0, 1, 1])
-    # print(test.mdp_1d.R[3, 1, 4])
-    # myopic = test.myopic(gamma = 0.1)
-    # print(test.mdp_1d.S)
-    # underconfident = test.underconfident(make_right_prob = 0.25)
-    # test.mdp_1d.solve()
 
+    # our baseline:
+    test = Experiment_1D(length, default_prob)
+
+    # MYOPIC EXPERIMENT RUNS:
+    for gamma in np.arange(0.01, 1, 0.1):
+        print(f'gamma = {gamma}')
+        myopic = test.myopic(gamma = gamma)
+        test.mdp_1d.solve()
+        print('')
+
+    # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
     for prob in np.arange(0.01, 1, 0.1):
         print(f'prob = {prob}')
         if prob < default_prob:
@@ -145,16 +133,10 @@ if __name__ == '__main__':
 
         if prob > default_prob:
             print('OVERCONFIDENT')
-            
+
         confident = test.confident(make_right_prob = prob)
         test.mdp_1d.solve()
         print('')
-
-    # for gamma in np.arange(0.01, 1, 0.1):
-    #     print(f'gamma = {gamma}')
-    #     myopic = test.myopic(gamma = gamma)
-    #     test.mdp_1d.solve()
-    #     print('')
 
 
     """
@@ -164,5 +146,12 @@ if __name__ == '__main__':
         - other 4 correspond to the different users -- eman + me
             - don't worry too much about value iter:
                 - still valuable to get this level of generalization down
+
+    11/6/2022:
+    - fix value iteration lol
+    - ** start moving to 2d world
+    - reward agent?? -- wait for response on slack
+    - different knobs?
+        -
 
     """
