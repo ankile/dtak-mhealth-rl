@@ -19,9 +19,9 @@ class MDP():
 ## experiment test -- knob = length of 1d world:
 class Experiment_1D():
 
-    def __init__(self, l):
+    def __init__(self, length):
         # length is the
-        S, A, T, R, gamma = self.make_MDP_params(l)
+        S, A, T, R, gamma = self.make_MDP_params(length)
         self.mdp_1d = MDP(S, A, T, R, gamma)
 
     def make_MDP_params(self, length):
@@ -64,3 +64,14 @@ if __name__ == '__main__':
     print(test.mdp_1d.T)
     print(test.mdp_1d.R[0, 1, 1])
     print(test.mdp_1d.R[3, 1, 4])
+
+
+    """
+    don't hardcode the types of the users in the experiment class
+    looking for 5 instantiations of the different classes/experiments
+        - world: negative reward floating around -- kevin
+        - other 4 correspond to the different users -- eman + me
+            - don't worry too much about value iter:
+                - still valuable to get this level of generalization down
+
+    """
