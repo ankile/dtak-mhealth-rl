@@ -2,35 +2,42 @@
 
 import numpy as np
 # setting up world
-ROWS = 3
+ROWS = 4
 COLS = 4
-WIN_STATE = (0, 3)
-LOSE_STATE = (1, 3)
-START = (2, 0)
+WIN_STATE = (3, 3)
+LOSE_STATE = (1,2)
+START = (0, 0)
 DETERMINISTIC = True
+
+world_actions = {
+    'up': 0,
+    'down': 1,
+    'left': 2,
+    'right': 3
+}
 
 class State:
     def __init__(self, state = START):
-        self.board = np.zeros([ROWS, COLS])
-
-        # wall:
-        # add knobs to randomize/scalable
-        self.board[1,1] = -1
+        self.rows = ROWS
+        self.cols = COLS
+        self.lose_state = LOSE_STATE
+        self.win_state = WIN_STATE
+        self.board = np.zeros((self.rows, self.cols))
+        self.lose_state_val = -1
+        self.win_state_val = 10
+        self.board[LOSE_STATE[0], LOSE_STATE[1]] = self.lose_state_val
+        self.board[WIN_STATE[0], WIN_STATE[1]] = self.win_state_val
         self.state = state
         self.atEnd = False
         self.determine = DETERMINISTIC
+        self.T = 0.7
 
 
-    def give_reward(self):
-        if self.state == WIN_STATE:
-            return 1
-        if self.state == LOSE_STATE:
-            return -1
-        else:
-            return 0
+    def give_reward(self, state):
+        return self.board[state[0], state[1]]
 
     def at_end(self):
-        if (self.state == WIN_STATE) or (self.state == LOSE_STATE):
+        if (self.state == WIN_STATE):
             self.atEnd = True
 
     def next_move(self, action):
@@ -50,61 +57,97 @@ class State:
             # checking if the next state is legal:
             if (next_state[0] >= 0) and (next_state[0] <= (ROWS - 1)):
                 if (next_state[1] >= 0) and (next_state[1] <= (COLS - 1)):
-                    if next_state != (1,1):
-                        return next_state
+                    return next_state
 
             return self.state
 
     # visualize
-    def print_board(self):
-        for i in range(0, ROWS):
-            print ('----------------')
-            out = '| '
-            for j in range(0, COLS):
-                if self.board[i, j] == 1:
-                    # this is just the start, right?
-                    token = '*'
-                if self.board[i, j] == -1:
-                    token = 'z'
-                if self.board[i, j] == 0:
-                    token = '0'
+    def visualize(self, world=True, policy=[]):
+        if len(policy) > 0:
+            grid = []
+            for i in range(ROWS):
+                for j in range(COLS):
+                    state = (i, j)
+                    if policy[state] == 0:
+                        grid.append(u'\u2191 ')
+                    elif policy[state] == 1:
+                        grid.append(u'\u2193 ')
+                    elif policy[state] == 2:
+                        grid.append(u'\u2190 ')
+                    else:
+                        grid.append(u'\u2192 ')
+                grid.append('\n')
 
-                out += token + ' | '
-            print(out)
-        print ('----------------')
+            toDraw = ''.join(grid)
+            print(toDraw)
+
+        if world:
+            grid = []
+            for i in range(ROWS):
+                for j in range(COLS):
+                    state = (i, j)
+                    if state == START:
+                        grid.append('o ')
+                    elif state == WIN_STATE:
+                        grid.append('X ')
+                    elif state == LOSE_STATE:
+                        grid.append('_ ')
+                    else:
+                        grid.append('. ')
+                grid.append('\n')
+
+            toDraw = ''.join(grid)
+            print(toDraw)
 
 class Agent:
     def __init__(self):
         self.states = []
         self.actions = ['up', 'down', 'left', 'right']
         self.State = State()
+        self.V = np.zeros((ROWS, COLS))
+        self.policy = self.create_initial_pol()
+        self.gamma = 0.9
+        # tolerance to know when to stop value iteration
+        self.theta = 0.0001
 
-        ##
-        self.lr = 0.2
-        self.explore_rate = 0.3
-        ##
+    def create_initial_pol(self):
+        policy = np.zeros((ROWS, COLS))
+        return policy
 
-        # initial state reward
-        self.state_values = {}
-        for i in range(ROWS):
-            for j in range(COLS):
-                # initial value = 0 bc agent knows nothing at first!
-                self.state_values[(i, j)] = 0
+    # Generating Q
+    def updated_action_values(self):
+        vals = np.zeros(len(self.actions))
 
-    def choose_action(self):
-        # pick action with greatest expected value
-        max_next_reward = 0
-        action = ''
+        for action in self.actions:
+            to_sum = []
+            action_set = set(self.actions)
+            action_set.remove(action)
 
-        if np.random.uniform(0, 1) <= self.explore_rate:
-            action = np.random.choice(self.actions)
-        else:
-            for possible_action in self.actions:
-                next_reward = self.state_values[self.State.next_move(possible_action)]
-                if next_reward >= max_next_reward:
-                    action = possible_action
-                    max_next_reward = next_reward
-        return action
+            to_sum.append(self.State.T * self.V[self.State.next_move(action)[0], self.State.next_move(action)[1]] +
+                         ((1-self.State.T)/3) * sum([self.V[self.State.next_move(a)[0], self.State.next_move(a)[1]] for a in action_set]))
+
+            vals[world_actions[action]] = sum(to_sum)
+
+        return vals
+
+    def value_iteration(self):
+        while True:
+            difference = 0
+            for i in range(ROWS):
+                for j in range(COLS):
+                    state = (i, j)
+                    self.State.state = state
+                    old_V = self.V[state]
+                    v = self.updated_action_values()
+
+                    self.policy[state] = np.argmax(v)
+                    self.V[state] = self.State.give_reward(state) + self.gamma * np.max(v)
+
+                    difference = max(difference, np.abs(old_V - self.V[state]))
+            if difference < self.theta:
+                break
+
+        print(self.V)
 
     def take_action(self, action):
         position = self.State.next_move(action)
@@ -115,45 +158,13 @@ class Agent:
         self.State = State()
 
     def play(self, rounds = 5):
-        current_round = 0
-        while current_round < rounds:
-            if self.State.atEnd:
-                # backprop
-                reward = self.State.give_reward()
-                self.state_values[self.State.state] = reward
-                print('Game End Reward: ', reward)
-
-                for state in reversed(self.states):
-                    reward = self.state_values[state] + self.lr * (reward - self.state_values[state])
-                    self.state_values[state] = round(reward, 3)
-                self.reset()
-                current_round += 1
-            else:
-                action = self.choose_action()
-                self.states.append(self.State.next_move(action))
-                print('current position {} action {}'.format(self.State.state, action))
-
-                # takes the action, reaches next state:
-                self.State = self.take_action(action)
-
-                # mark end
-                self.State.at_end()
-                print('next state ', self.State.state)
-                print ('----------------')
-    def show_values(self):
-        for i in range(0, ROWS):
-            print ('----------------------------')
-            out = '| '
-            for j in range(0, COLS):
-                out += str(self.state_values[(i, j)]).ljust(6) + '| '
-            print(out)
-        print ('----------------------------')
+        self.value_iteration()
 
 
 if __name__ == '__main__':
     agent = Agent()
-    agent.play(5)
-    print(agent.show_values())
+    agent.play()
+    agent.State.visualize(policy=agent.policy)
 
 
 
@@ -163,7 +174,18 @@ if __name__ == '__main__':
 # - where observing states are
 # - change reward/where they are
     # frequency of reward
+    # distribution of reward
 # - obstacles/how to get around them
+
+# Experiment design:
+# - For each knob:
+    # Run world for each different type of agent
+        # vary the 'agent knob' by some amount to observe changes
+            # record different policies and behavior.
+
+
+# **NOTE: how to define the 'optimal' parameters (gamma, transition probs, etc.)**
+
 
 
 # ultimate goal:
