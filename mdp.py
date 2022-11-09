@@ -10,7 +10,7 @@ class MDP():
 
         self.V = np.zeros(len(self.S))
         self.policy = np.zeros(len(self.S))
-        self.theta = 0.0001
+        self.theta = np.nextafter(0, 1)
         self.state = self.S[0]
 
         # sanity checks:
@@ -112,7 +112,7 @@ class Experiment_1D():
 
 
 if __name__ == '__main__':
-    length = 5
+    length = 20
     default_prob = 0.8
 
     # our baseline:
