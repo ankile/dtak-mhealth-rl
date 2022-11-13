@@ -29,7 +29,7 @@ class MDP():
                 to_sum.append(self.T[action][state][p] * (self.R[state][action][p] + (self.gamma * self.V[p])))
 
             vals[action] = sum(to_sum)
-
+        # print(vals)
         return vals
 
     def value_iteration(self):
@@ -43,6 +43,10 @@ class MDP():
                 self.V[state] = np.max(v)
 
                 difference = max(difference, np.abs(old_V - self.V[state]))
+                print(np.abs(old_V - self.V[state]))
+                # print(f'this is {difference}')
+                # print(self.V)
+            # print(self.theta)
             if difference < self.theta:
                 break
 
@@ -70,14 +74,16 @@ class MDP():
 
 class Experiment_1D():
 
-    def __init__(self, length, make_right_prob):
-        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(length, make_right_prob)
+    def __init__(self, length, make_right_prob = 0.8, neg_idx = 8, neg_magnitude = -1):
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(length, make_right_prob, neg_idx, neg_magnitude)
+        self.neg_idx = neg_idx
+        self.neg_magnitude = neg_magnitude
         self.mdp_1d = MDP(self.S, self.A, self.T, self.R, self.gamma)
 
-    def make_MDP_params(self, length, make_right_prob):
+    def make_MDP_params(self, length, make_right_prob, neg_idx, neg_magnitude):
         S = np.arange(length)
         A = np.array((0, 1)) # 0 is left and 1 is right
-        gamma = 0.8
+        gamma = 0.5
 
         T = np.zeros((2, length, length))
 
@@ -94,7 +100,9 @@ class Experiment_1D():
             T[1, i, i+1] = make_right_prob
 
         R = np.zeros((length, 2, length)) # R is sparse
-        R[length-2, 1, length-1] = 10
+        R[length - 2, 1, length - 1] = 100
+        R[neg_idx - 1, 1, neg_idx] = neg_magnitude
+        R[neg_idx + 1, 0, neg_idx] = neg_magnitude
 
         return S, A, T, R, gamma
 
@@ -103,7 +111,7 @@ class Experiment_1D():
 
     def confident(self, make_right_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
-        S, A, T, R, gamma = self.make_MDP_params(length = length, make_right_prob = make_right_prob)
+        S, A, T, R, gamma = self.make_MDP_params(length, make_right_prob, self.neg_idx, self.neg_magnitude)
         self.mdp_1d = MDP(S, A, T, R, gamma)
 
     def reward(self, R):
@@ -112,32 +120,39 @@ class Experiment_1D():
 
 
 if __name__ == '__main__':
-    length = 20
+    length = 10
     default_prob = 0.8
 
     # our baseline:
+    # test = Experiment_1D(length, default_prob)
+    # neg_idx = 8
+    # neg_magnitude = -10
+
+    # reward test
     test = Experiment_1D(length, default_prob)
+    test.myopic(gamma = 0.01)
+    test.mdp_1d.solve()
+    print('')
 
     # MYOPIC EXPERIMENT RUNS:
-    for gamma in np.arange(0.01, 1, 0.1):
-        print(f'gamma = {gamma}')
-        myopic = test.myopic(gamma = gamma)
-        test.mdp_1d.solve()
-        print('')
-
-    # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
-    for prob in np.arange(0.01, 1, 0.1):
-        print(f'prob = {prob}')
-        if prob < default_prob:
-            print('UNDERCONFIDENT')
-
-        if prob > default_prob:
-            print('OVERCONFIDENT')
-
-        confident = test.confident(make_right_prob = prob)
-        test.mdp_1d.solve()
-        print('')
-
+    # for gamma in np.arange(0.01, 1, 0.1):
+    #     print(f'gamma = {gamma}')
+    #     myopic = test.myopic(gamma = gamma)
+    #     test.mdp_1d.solve()
+    #     print('')
+    #
+    # # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
+    # for prob in np.arange(0.01, 1, 0.1):
+    #     print(f'prob = {prob}')
+    #     if prob < default_prob:
+    #         print('UNDERCONFIDENT')
+    #
+    #     if prob > default_prob:
+    #         print('OVERCONFIDENT')
+    #
+    #     confident = test.confident(make_right_prob = prob)
+    #     test.mdp_1d.solve()
+    #     print('')
 
     """
     don't hardcode the types of the users in the experiment class
