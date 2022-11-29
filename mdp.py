@@ -1,4 +1,7 @@
 import numpy as np
+import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
 
 class MDP():
     def __init__(self, S, A, T, R, gamma):
@@ -49,10 +52,10 @@ class MDP():
             # print(self.theta)
             if difference < self.theta:
                 break
-
+        
         print(self.V)
 
-    def solve(self):
+    def solve(self, policy_name='Placeholder Policy Name'):
         self.value_iteration()
 
         if len(self.policy) > 0:
@@ -64,6 +67,18 @@ class MDP():
                     grid.append(u'\u2192 ')
 
             toDraw = ''.join(grid)
+            arrows_list = toDraw.split()
+
+            # reformat the list of arrows into a correctly-shaped array to add to heatmap
+            labels = np.array(arrows_list)
+            labels = np.reshape(labels, (1, len(labels)))
+
+            # draw heatmap and save in figure
+            hmap = sns.heatmap(np.reshape(self.V, (1, len(self.V))), annot=labels, fmt='', yticklabels=False, cbar_kws={'label': 'Value'})
+            hmap.set(xlabel='State', title=f'{policy_name.title()} Value Iteration')
+            hmap = hmap.figure
+            file_name = policy_name.replace(' ', '_').lower()
+            hmap.savefig(f'{file_name}.png')
             print(toDraw)
 
         return
@@ -122,6 +137,7 @@ class Experiment_1D():
 if __name__ == '__main__':
     length = 10
     default_prob = 0.8
+    sns.set()
 
     # our baseline:
     # test = Experiment_1D(length, default_prob)
@@ -131,7 +147,7 @@ if __name__ == '__main__':
     # reward test
     test = Experiment_1D(length, default_prob)
     test.myopic(gamma = 0.01)
-    test.mdp_1d.solve()
+    test.mdp_1d.solve('Myopic')
     print('')
 
     # MYOPIC EXPERIMENT RUNS:
