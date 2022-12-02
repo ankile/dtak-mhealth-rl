@@ -151,3 +151,31 @@ if __name__ == '__main__':
         elif prob > default_prob:
             test.mdp_1d.solve('Overconfident Agent: p={:.3f}'.format(prob))
 
+
+"""
+
+TODO: 
+
+- Make conjectures for agent and see how the behavior goes against those conjectures for the writeup
+
+- Look at how to differentiate behavior between the agents 
+    - Can we tell what a myopic agent looks like vs, say, under/over-confident agents.
+
+- Different incrememts, size of world, diff knobs to choose based on result looking for and experiments we want to execute.
+
+- Basically: go back to main question of understanding the differences between the irrational agents based on behavior.
+    - Design experiments around this question!
+
+- Possibly layout the different PNGs together to see the layout in ust one picture.
+
+
+- **TODO BY NEXT WEEK**:
+    - Visualize the pattern based on experiments chosen
+    - Writeup results on whether we can differentiate between the different agents on their world.
+
+- To consider:
+    - Workshop for next semester. Need to submit work to be considered...
+    - ICML conference (July) -> workshops attatched to conference.
+        - March details released -> due date in May.
+
+"""
