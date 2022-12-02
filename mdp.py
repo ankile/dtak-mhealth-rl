@@ -1,6 +1,5 @@
 import numpy as np
 import seaborn as sns
-import matplotlib
 import matplotlib.pyplot as plt
 
 class MDP():
@@ -18,12 +17,9 @@ class MDP():
 
         # sanity checks:
         assert T.shape == (len(self.A), len(self.S), len(self.S)) # action x state x state
-        # assert T.sum(axis=0) == 1 # rows of T have to = 1
         assert R.shape == (len(self.S), len(self.A), len(self.S)) # state x action x next_state
 
-    # value iteration is a little funky:
-    def updated_action_values(self, state):
-
+    def bellman_eq(self, state):
         vals = np.zeros(len(self.A))
 
         for action in self.A:
@@ -32,7 +28,7 @@ class MDP():
                 to_sum.append(self.T[action][state][p] * (self.R[state][action][p] + (self.gamma * self.V[p])))
 
             vals[action] = sum(to_sum)
-        # print(vals)
+
         return vals
 
     def value_iteration(self):
@@ -40,16 +36,13 @@ class MDP():
             difference = 0
             for state in self.S:
                 old_V = self.V[state]
-                v = self.updated_action_values(state)
+                v = self.bellman_eq(state)
 
                 self.policy[state] = np.argmax(v)
                 self.V[state] = np.max(v)
 
                 difference = max(difference, np.abs(old_V - self.V[state]))
-                print(np.abs(old_V - self.V[state]))
-                # print(f'this is {difference}')
-                # print(self.V)
-            # print(self.theta)
+
             if difference < self.theta:
                 break
         
@@ -75,10 +68,12 @@ class MDP():
 
             # draw heatmap and save in figure
             hmap = sns.heatmap(np.reshape(self.V, (1, len(self.V))), annot=labels, fmt='', yticklabels=False, cbar_kws={'label': 'Value'})
-            hmap.set(xlabel='State', title=f'{policy_name.title()} Value Iteration')
+            hmap.set(xlabel='State', title=f'{policy_name} Value Iteration')
             hmap = hmap.figure
             file_name = policy_name.replace(' ', '_').lower()
-            hmap.savefig(f'{file_name}.png')
+            plt.savefig(f'{file_name}.png')
+            plt.clf()
+            
             print(toDraw)
 
         return
@@ -102,19 +97,17 @@ class Experiment_1D():
 
         T = np.zeros((2, length, length))
 
-        T[0] = np.diag(np.array([1] + [1 - make_right_prob] * (length-2) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
+        T[0] = np.diag(np.array([1] + [1 - make_right_prob] * (length-2) + [1]))
 
-        # Do this more slickly with a np.roll()
         for i in range(1, length-1):
             T[0, i, i-1] = make_right_prob
 
-        T[1] = np.diag(np.array([1 - make_right_prob] * (length-1) + [1])) # 20% chance of staying in the same state unless in state 0 or state l-1
+        T[1] = np.diag(np.array([1 - make_right_prob] * (length-1) + [1]))
 
-        # Do this more slickly with a np.roll()
         for i in range(0, length-1):
             T[1, i, i+1] = make_right_prob
 
-        R = np.zeros((length, 2, length)) # R is sparse
+        R = np.zeros((length, 2, length))
         R[length - 2, 1, length - 1] = 100
         R[neg_idx - 1, 1, neg_idx] = neg_magnitude
         R[neg_idx + 1, 0, neg_idx] = neg_magnitude
@@ -140,49 +133,49 @@ if __name__ == '__main__':
     sns.set()
 
     # our baseline:
-    # test = Experiment_1D(length, default_prob)
-    # neg_idx = 8
-    # neg_magnitude = -10
-
-    # reward test
     test = Experiment_1D(length, default_prob)
-    test.myopic(gamma = 0.01)
-    test.mdp_1d.solve('Myopic')
-    print('')
+    test.mdp_1d.solve('Baseline World')
+    neg_idx = 8
+    neg_magnitude = -10
 
     # MYOPIC EXPERIMENT RUNS:
-    # for gamma in np.arange(0.01, 1, 0.1):
-    #     print(f'gamma = {gamma}')
-    #     myopic = test.myopic(gamma = gamma)
-    #     test.mdp_1d.solve()
-    #     print('')
-    #
-    # # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
-    # for prob in np.arange(0.01, 1, 0.1):
-    #     print(f'prob = {prob}')
-    #     if prob < default_prob:
-    #         print('UNDERCONFIDENT')
-    #
-    #     if prob > default_prob:
-    #         print('OVERCONFIDENT')
-    #
-    #     confident = test.confident(make_right_prob = prob)
-    #     test.mdp_1d.solve()
-    #     print('')
+    for gamma in np.arange(0.01, 1, 0.1):
+        myopic = test.myopic(gamma = gamma)
+        test.mdp_1d.solve('Myopic Agent: \u03B3={:.3f}'.format(gamma))
+    
+    # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
+    for prob in np.arange(0.01, 1, 0.1):
+        confident = test.confident(make_right_prob = prob)
+        if prob < default_prob:
+            test.mdp_1d.solve('Underconfident Agent: p={:.3f}'.format(prob))
+        elif prob > default_prob:
+            test.mdp_1d.solve('Overconfident Agent: p={:.3f}'.format(prob))
 
-    """
-    don't hardcode the types of the users in the experiment class
-    looking for 5 instantiations of the different classes/experiments
-        - world: negative reward floating around -- kevin
-        - other 4 correspond to the different users -- eman + me
-            - don't worry too much about value iter:
-                - still valuable to get this level of generalization down
 
-    11/6/2022:
-    - fix value iteration lol
-    - ** start moving to 2d world
-    - reward agent?? -- wait for response on slack
-    - different knobs?
-        -
+"""
 
-    """
+TODO: 
+
+- Make conjectures for agent and see how the behavior goes against those conjectures for the writeup
+
+- Look at how to differentiate behavior between the agents 
+    - Can we tell what a myopic agent looks like vs, say, under/over-confident agents.
+
+- Different incrememts, size of world, diff knobs to choose based on result looking for and experiments we want to execute.
+
+- Basically: go back to main question of understanding the differences between the irrational agents based on behavior.
+    - Design experiments around this question!
+
+- Possibly layout the different PNGs together to see the layout in ust one picture.
+
+
+- **TODO BY NEXT WEEK**:
+    - Visualize the pattern based on experiments chosen
+    - Writeup results on whether we can differentiate between the different agents on their world.
+
+- To consider:
+    - Workshop for next semester. Need to submit work to be considered...
+    - ICML conference (July) -> workshops attatched to conference.
+        - March details released -> due date in May.
+
+"""
