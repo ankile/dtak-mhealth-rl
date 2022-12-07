@@ -59,8 +59,8 @@ class MDP():
                 else:
                     grid.append(u'\u2192 ')
 
-            toDraw = ''.join(grid)
-            arrows_list = toDraw.split()
+            draw_grid = ''.join(grid)
+            arrows_list = draw_grid.split()
 
             # reformat the list of arrows into a correctly-shaped array to add to heatmap
             labels = np.array(arrows_list)
@@ -74,7 +74,7 @@ class MDP():
             plt.savefig(f'{file_name}.png')
             plt.clf()
             
-            print(toDraw)
+            print(draw_grid)
 
         return
 
@@ -83,11 +83,18 @@ class MDP():
 
 
 class Experiment_1D():
-
     def __init__(self, length, make_right_prob = 0.8, neg_idx = 8, neg_magnitude = -1):
-        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(length, make_right_prob, neg_idx, neg_magnitude)
+        # storing these variables as self for reset() function.
+        self.make_right_prob = make_right_prob
+        self.length = length
         self.neg_idx = neg_idx
         self.neg_magnitude = neg_magnitude
+
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(length, make_right_prob, neg_idx, neg_magnitude)
+        self.mdp_1d = MDP(self.S, self.A, self.T, self.R, self.gamma)
+
+    def reset(self):
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(self.length, self.make_right_prob, self.neg_idx, self.neg_magnitude)
         self.mdp_1d = MDP(self.S, self.A, self.T, self.R, self.gamma)
 
     def make_MDP_params(self, length, make_right_prob, neg_idx, neg_magnitude):
@@ -108,7 +115,11 @@ class Experiment_1D():
             T[1, i, i+1] = make_right_prob
 
         R = np.zeros((length, 2, length))
-        R[length - 2, 1, length - 1] = 100
+        # variable to keep track of default reward magnitude
+        default_R_magnitude = 100
+
+        R[length - 2, 1, length - 1] = default_R_magnitude
+
         R[neg_idx - 1, 1, neg_idx] = neg_magnitude
         R[neg_idx + 1, 0, neg_idx] = neg_magnitude
 
@@ -119,12 +130,18 @@ class Experiment_1D():
 
     def confident(self, make_right_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
-        S, A, T, R, gamma = self.make_MDP_params(length, make_right_prob, self.neg_idx, self.neg_magnitude)
+        S, A, T, R, gamma = self.make_MDP_params(self.length, make_right_prob, self.neg_idx, self.neg_magnitude)
         self.mdp_1d = MDP(S, A, T, R, gamma)
 
-    def reward(self, R):
-        # TODO:
-        pass
+    def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
+        S, A, T, R, gamma = self.make_MDP_params(self.length, self.make_right_prob, self.neg_idx, self.neg_magnitude)
+        R[agent_R_idx - 1, 1, agent_R_idx] = agent_R_magnitude
+        R[agent_R_idx + 1, 0, agent_R_idx] = agent_R_magnitude
+
+        if ignore_default_R:
+            R[length - 2, 1, length - 1] = 0
+
+        self.mdp_1d = MDP(S, A, T, R, gamma)
 
 
 if __name__ == '__main__':
@@ -137,14 +154,23 @@ if __name__ == '__main__':
     test.mdp_1d.solve('Baseline World')
     neg_idx = 8
     neg_magnitude = -10
+    test.mdp_1d.reset()
+
+    # REWARD AGENT RUNS:
+    reward_agent_R_val = 50
+    reward = test.reward(2, reward_agent_R_val, False)
+    test.mdp_1d.solve("Reward Agent: reward value={}".format(reward_agent_R_val))
+    test.mdp_1d.reset()
 
     # MYOPIC EXPERIMENT RUNS:
     for gamma in np.arange(0.01, 1, 0.1):
+        test.mdp_1d.reset()
         myopic = test.myopic(gamma = gamma)
         test.mdp_1d.solve('Myopic Agent: \u03B3={:.3f}'.format(gamma))
     
     # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
     for prob in np.arange(0.01, 1, 0.1):
+        test.mdp_1d.reset()
         confident = test.confident(make_right_prob = prob)
         if prob < default_prob:
             test.mdp_1d.solve('Underconfident Agent: p={:.3f}'.format(prob))
