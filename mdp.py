@@ -71,10 +71,101 @@ class MDP():
             hmap.set(xlabel='State', title=f'{policy_name} Value Iteration')
             hmap = hmap.figure
             file_name = policy_name.replace(' ', '_').lower()
-            plt.savefig(f'{file_name}.png')
+            plt.savefig(f'images/{file_name}.png')
             plt.clf()
             
             print(toDraw)
+
+        return
+
+    def reset(self):
+        self.state = self.S[0]
+
+class MDP_2D():
+    def __init__(self, S, A, T, R, gamma):
+        self.S = S
+        self.A = A
+        self.T = T
+        self.R = R
+        self.gamma = gamma
+
+        self.height = self.S.shape[0]
+        self.width = self.S.shape[1]
+
+        self.V = np.zeros(self.S.shape)
+        self.policy = np.zeros(self.S.shape)
+        self.theta = np.nextafter(0, 1)
+        self.state = self.S[0][0]
+
+        # sanity checks:
+        assert T.shape == (len(self.A), self.height*self.width, self.height*self.width) # action x state x state
+        assert R.shape == (self.height*self.width, len(self.A), self.height*self.width) # state x action x next_state
+
+    def bellman_eq(self, state):
+        vals = np.zeros(len(self.A))
+
+        for action in self.A:
+            to_sum = []
+            for p in range(len(self.T[action][state])):
+                to_sum.append(self.T[action][state][p] * (self.R[state][action][p] + (self.gamma * self.V[p//self.width][p%self.width])))
+
+            vals[action] = sum(to_sum)
+        # print('BELLLLLL', vals)
+        return vals
+
+    def value_iteration(self):
+        while True:
+            difference = 0
+            # print("ASLKFJALKFJKL", self.V)
+            for row in self.S:
+                for state in row:
+                    # print(state)
+                    old_V = self.V[state//self.width][state%self.width]
+                    v = self.bellman_eq(state)
+
+                    self.policy[state//self.width][state%self.width] = np.argmax(v)
+                    self.V[state//self.width][state%self.width] = np.max(v)
+
+                    difference = max(difference, np.abs(old_V - self.V[state//self.width][state%self.width]))
+
+            if difference < self.theta:
+                break
+        
+        print(self.V)
+        print(self.policy)
+
+    def solve(self, policy_name='Placeholder Policy Name'):
+        self.value_iteration()
+
+        if len(self.policy) > 0:
+            grid = []
+            
+            for row in self.S:
+                grid_row = []
+                for state in row:
+                    if self.policy[state//self.width][state%self.width] == 0:
+                        grid_row.append(u'\u2190 ')
+                    elif self.policy[state//self.width][state%self.width] == 1:
+                        grid_row.append(u'\u2192 ')
+                    elif self.policy[state//self.width][state%self.width] == 2:
+                        grid_row.append(u'\u2191 ')
+                    else:
+                        grid_row.append(u'\u2193 ')
+                grid.append(grid_row)
+            
+            print(grid)
+
+            # TODO: GENERALIZE THE NEG IDX MAG AND REWARD IDX MAG TO BE ABLE TO TAKE IN A LIST OF VALUES
+
+            labels = np.array(grid)
+
+            # draw heatmap and save in figure
+            hmap = sns.heatmap(self.V, annot=labels, fmt='', xticklabels=False, yticklabels=False, cbar_kws={'label': 'Value'})
+            hmap.set(xlabel='States', title=f'{policy_name} Value Iteration')
+            hmap = hmap.figure
+            file_name = policy_name.replace(' ', '_').lower()
+            plt.savefig(f'images/{file_name}.png')
+            plt.clf()
 
         return
 
@@ -88,7 +179,7 @@ class Experiment_1D():
         self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(length, make_right_prob, neg_idx, neg_magnitude)
         self.neg_idx = neg_idx
         self.neg_magnitude = neg_magnitude
-        self.mdp_1d = MDP(self.S, self.A, self.T, self.R, self.gamma)
+        self.mdp = MDP(self.S, self.A, self.T, self.R, self.gamma)
 
     def make_MDP_params(self, length, make_right_prob, neg_idx, neg_magnitude):
         S = np.arange(length)
@@ -115,12 +206,106 @@ class Experiment_1D():
         return S, A, T, R, gamma
 
     def myopic(self, gamma):
-        self.mdp_1d = MDP(self.S, self.A, self.T, self.R, gamma)
+        self.mdp = MDP(self.S, self.A, self.T, self.R, gamma)
 
     def confident(self, make_right_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
         S, A, T, R, gamma = self.make_MDP_params(length, make_right_prob, self.neg_idx, self.neg_magnitude)
-        self.mdp_1d = MDP(S, A, T, R, gamma)
+        self.mdp = MDP(S, A, T, R, gamma)
+
+    def reward(self, R):
+        # TODO:
+        pass
+
+class Experiment_2D():
+
+    def __init__(self, height, width, make_right_prob=0.8, neg_idx=-1, neg_magnitude=-1, reward_idx=-1, reward_magnitude=100):
+        if not (reward_idx >= 0 and reward_idx < width*height):
+            reward_idx = reward_idx % (width*height)
+        if not (neg_idx >= 0 and neg_idx < width*height):
+            neg_idx = neg_idx % (width*height)
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(height, width, make_right_prob, neg_idx, neg_magnitude, reward_idx, reward_magnitude)
+        self.neg_idx = neg_idx
+        self.neg_magnitude = neg_magnitude
+        self.reward_idx = reward_idx
+        self.reward_magnitude = reward_magnitude
+        self.height = height
+        self.width = width
+        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
+
+    def make_MDP_params(self, height, width, make_right_prob, neg_idx, neg_magnitude, reward_idx, reward_magnitude):
+        S = np.arange(height*width).reshape(height, -1)
+        A = np.array((0, 1, 2, 3)) # 0 is left, 1 is right, 2 is up, 3 is down
+        gamma = 0.5
+
+        T = np.zeros((A.shape[0], height*width, height*width))
+
+        # left move transition probabilities
+        for i in range(width*height):
+            # left-border states cannot allow further left movement
+            if i % width == 0:
+                T[0, i, i] = 1
+            else:
+                T[0, i, i-1] = make_right_prob
+                T[0, i, i] = 1 - make_right_prob
+
+        # right move transition probabilities
+        for i in range(width*height):
+            # right-border states cannot allow further right movement
+            if i % width == width - 1:
+                T[1, i, i] = 1
+            else:
+                T[1, i, i+1] = make_right_prob
+                T[1, i, i] = 1 - make_right_prob
+
+        # up move transition probabilities
+        for i in range(width*height):
+            # top states cannot allow further up movement
+            if i < width:
+                T[2, i, i] = 1
+            else:
+                T[2, i, i-width] = make_right_prob
+                T[2, i, i] = 1 - make_right_prob
+
+        # dowm move transition probabilities
+        for i in range(width*height):
+            # bottom states cannot allow further down movement
+            if i >= width*(height-1):
+                T[3, i, i] = 1
+            else:
+                T[3, i, i+width] = make_right_prob
+                T[3, i, i] = 1 - make_right_prob          
+
+        # previous state, action, new state
+        R = np.zeros((width*height, 4, width*height))
+
+        def assign_reward(idx, magnitude):
+            # check right border
+            if idx+1 % width != width and idx+1 < width*height:
+                R[idx+1, 0, idx] = magnitude
+            # check left border
+            if idx-1 % width != width-1 and idx-1 >= 0:
+                R[idx-1, 1, idx] = magnitude
+            # check bottom border
+            if idx <= width * (height - 1) and idx+width < width*height:
+                R[idx+width, 2, idx] = magnitude
+            # check top border
+            if idx >= width and idx-width >= 0:
+                R[idx-width, 3, idx] = magnitude
+            
+
+        assign_reward(reward_idx, reward_magnitude)
+        assign_reward(neg_idx, neg_magnitude)
+
+        return S, A, T, R, gamma
+
+    def myopic(self, gamma):
+        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, gamma)
+
+    def confident(self, make_right_prob):
+        # probability is LOWER than the "true": UNDERCONFIDENT
+        S, A, T, R, gamma = self.make_MDP_params(self.height, self.width, make_right_prob, neg_idx, neg_magnitude, self.reward_idx, self.reward_magnitude)
+        self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def reward(self, R):
         # TODO:
@@ -133,23 +318,24 @@ if __name__ == '__main__':
     sns.set()
 
     # our baseline:
-    test = Experiment_1D(length, default_prob)
-    test.mdp_1d.solve('Baseline World')
+    # test = Experiment_1D(length, default_prob)
+    test = Experiment_2D(4, 4, neg_idx=-11, neg_magnitude=-1000)
+    test.mdp.solve('Baseline World')
     neg_idx = 8
     neg_magnitude = -10
 
     # MYOPIC EXPERIMENT RUNS:
     for gamma in np.arange(0.01, 1, 0.1):
         myopic = test.myopic(gamma = gamma)
-        test.mdp_1d.solve('Myopic Agent: \u03B3={:.3f}'.format(gamma))
+        test.mdp.solve('Myopic Agent: \u03B3={:.3f}'.format(gamma))
     
     # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
     for prob in np.arange(0.01, 1, 0.1):
         confident = test.confident(make_right_prob = prob)
         if prob < default_prob:
-            test.mdp_1d.solve('Underconfident Agent: p={:.3f}'.format(prob))
+            test.mdp.solve('Underconfident Agent: p={:.3f}'.format(prob))
         elif prob > default_prob:
-            test.mdp_1d.solve('Overconfident Agent: p={:.3f}'.format(prob))
+            test.mdp.solve('Overconfident Agent: p={:.3f}'.format(prob))
 
 
 """
