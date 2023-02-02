@@ -219,21 +219,25 @@ class Experiment_1D():
 
 class Experiment_2D():
 
-    def __init__(self, height, width, make_right_prob=0.8, neg_idx=-1, neg_magnitude=-1, reward_idx=-1, reward_magnitude=100):
-        if not (reward_idx >= 0 and reward_idx < width*height):
-            reward_idx = reward_idx % (width*height)
-        if not (neg_idx >= 0 and neg_idx < width*height):
-            neg_idx = neg_idx % (width*height)
-        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(height, width, make_right_prob, neg_idx, neg_magnitude, reward_idx, reward_magnitude)
-        self.neg_idx = neg_idx
-        self.neg_magnitude = neg_magnitude
-        self.reward_idx = reward_idx
-        self.reward_magnitude = reward_magnitude
+    def __init__(self, height, width, make_right_prob=0.8, rewards_dict={-1:100, -2:-100, -6:-100, -10:-100}):
+    # def __init__(self, height, width, make_right_prob=0.8, neg_idx=-1, neg_magnitude=-1, reward_idx=-1, reward_magnitude=100):
+        fixed_rewards_dict = {}
+        for idx in rewards_dict:
+            if not (idx >= 0 and idx < width*height):
+                fixed_rewards_dict[idx % (width*height)] = rewards_dict[idx]
+            else:
+                fixed_rewards_dict[idx] = rewards_dict[idx]
+        rewards_dict = fixed_rewards_dict
+        print(rewards_dict)
+        
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(height, width, make_right_prob, rewards_dict)
+        self.rewards_dict = rewards_dict
         self.height = height
         self.width = width
         self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
 
-    def make_MDP_params(self, height, width, make_right_prob, neg_idx, neg_magnitude, reward_idx, reward_magnitude):
+    def make_MDP_params(self, height, width, make_right_prob, rewards_dict):
+    # def make_MDP_params(self, height, width, make_right_prob, neg_idx, neg_magnitude, reward_idx, reward_magnitude):
         S = np.arange(height*width).reshape(height, -1)
         A = np.array((0, 1, 2, 3)) # 0 is left, 1 is right, 2 is up, 3 is down
         gamma = 0.5
@@ -292,10 +296,11 @@ class Experiment_2D():
             # check top border
             if idx >= width and idx-width >= 0:
                 R[idx-width, 3, idx] = magnitude
-            
-
-        assign_reward(reward_idx, reward_magnitude)
-        assign_reward(neg_idx, neg_magnitude)
+        
+        for idx in rewards_dict:
+            assign_reward(idx, rewards_dict[idx])
+        # assign_reward(reward_idx, reward_magnitude)
+        # assign_reward(neg_idx, neg_magnitude)
 
         return S, A, T, R, gamma
 
@@ -304,7 +309,7 @@ class Experiment_2D():
 
     def confident(self, make_right_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
-        S, A, T, R, gamma = self.make_MDP_params(self.height, self.width, make_right_prob, neg_idx, neg_magnitude, self.reward_idx, self.reward_magnitude)
+        S, A, T, R, gamma = self.make_MDP_params(self.height, self.width, make_right_prob, self.rewards_dict)
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def reward(self, R):
@@ -319,7 +324,7 @@ if __name__ == '__main__':
 
     # our baseline:
     # test = Experiment_1D(length, default_prob)
-    test = Experiment_2D(4, 4, neg_idx=-11, neg_magnitude=-1000)
+    test = Experiment_2D(4, 4)
     test.mdp.solve('Baseline World')
     neg_idx = 8
     neg_magnitude = -10
