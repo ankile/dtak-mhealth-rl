@@ -11,23 +11,29 @@ setup_name = setup_name.replace(' ', '_').lower()
 if not os.path.exists(f'images/{setup_name}'):
    os.makedirs(f'images/{setup_name}')
 
-length = 27
-starting_state = 20
+length = 10
+starting_state = 7
 reward_mag = 100
-big_cost = -10
-latent_cost = -1
+small_reward_mag = -1
+big_cost = -20
+latent_cost = -4
 rewards_dict = {}
 
 for i in range(length):
     rewards_dict[i] = latent_cost
 
-for i in range(starting_state, length):
+for i in range(starting_state+1, length):
     rewards_dict[i] = big_cost
+
+if small_reward_mag != -1:
+    rewards_dict[0] = small_reward_mag
+else:
+    rewards_dict[0] = reward_mag
 rewards_dict[length - 1] = reward_mag
-rewards_dict[0] = reward_mag
+
 
 choices = []
-gammas = np.arange(0.1, 0.99, 0.05)
+gammas = np.arange(0.5, 0.995, 0.05)
 probs = np.arange(0.05, 1.001, 0.05)
 
 for gamma in gammas:
@@ -48,7 +54,7 @@ choices_df = pd.DataFrame(choices, columns=probs)
 choices_df.index = gammas
 
 hmap = sns.heatmap(choices_df, annot=True, fmt='', cbar=False, cbar_kws={'label': 'Choice'})
-title = f'Long Path: {starting_state}, Short Path: {length-starting_state}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}'
+title = f'Long Path: {starting_state}, Short Path: {length-starting_state-1}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}'
 hmap.set(xlabel='Confidence', ylabel='Gamma', title=title)
 hmap = hmap.figure
 plt.savefig(f'images/{setup_name}/summary.png')

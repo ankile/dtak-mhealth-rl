@@ -5,16 +5,31 @@ import pandas as pd
 default_prob = 0.8
 default_gamma = 0.9
 sns.set()
-setup_name = 'Simple'
+setup_name = 'Wall_MSE'
 setup_name = setup_name.replace(' ', '_').lower()
 
 if not os.path.exists(f'images/{setup_name}'):
    os.makedirs(f'images/{setup_name}')
 
 length = 10
+starting_state = 7
 reward_mag = 100
+small_reward_mag = -1
+big_cost = -20
+latent_cost = -4
 rewards_dict = {}
-rewards_dict[length-1] = reward_mag
+
+for i in range(length):
+    rewards_dict[i] = latent_cost
+
+for i in range(starting_state+1, length):
+    rewards_dict[i] = big_cost
+
+if small_reward_mag != -1:
+    rewards_dict[0] = small_reward_mag
+else:
+    rewards_dict[0] = reward_mag
+rewards_dict[length - 1] = reward_mag
 
 mses = []
 gammas = np.arange(0.8, 0.999, 0.015)
@@ -41,7 +56,7 @@ mses_df = pd.DataFrame(mses, columns=probs)
 mses_df.index = gammas
 
 hmap = sns.heatmap(mses_df, annot=True, fmt='', cbar=True, cbar_kws={'label': 'MSE'}, annot_kws={"size": 35 / np.sqrt(len(mses_df))})
-title = f'Length: {length}, Reward: {reward_mag}, Default Gamma: {default_gamma}, Default Prob: {default_prob}'
+title = f'Long Path: {starting_state}, Short Path: {length-starting_state-1}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}'
 hmap.set(xlabel='Confidence', ylabel='Gamma', title=title)
 hmap = hmap.figure
 plt.savefig(f'images/{setup_name}/summary.png')
