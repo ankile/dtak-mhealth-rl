@@ -51,7 +51,7 @@ for gamma in gammas:
 probs = list(probs.round(2))
 gammas = list(gammas.round(3))
 choices_df = pd.DataFrame(choices, columns=probs)
-choices_df.index = gammas
+choices_df.index = pd.Index(gammas)
 
 hmap = sns.heatmap(choices_df, annot=True, fmt='', cbar=False, cbar_kws={'label': 'Choice'})
 title = f'Long Path: {starting_state}, Short Path: {length-starting_state-1}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}'
