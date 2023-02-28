@@ -2,6 +2,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from utils import Actions
+
 class MDP():
     def __init__(self, S, A, T, R, gamma):
         self.S = S
@@ -154,10 +156,8 @@ class MDP_2D():
             if difference < self.theta:
                 break
         
-        # print(self.V)
-        # print(self.policy)
 
-    def solve(self, setup_name = 'Placeholder Setup Name', policy_name='Placeholder Policy Name'):
+    def solve(self, setup_name='Placeholder Setup Name', policy_name='Placeholder Policy Name'):
         self.value_iteration()
 
         if len(self.policy) > 0:
@@ -176,8 +176,6 @@ class MDP_2D():
                         grid_row.append(u'\u2193 \n ' + str(round(self.V[state//self.width][state%self.width], precision)))
                 grid.append(grid_row)
             
-            # print(grid)
-
             labels = np.array(grid)
 
 
@@ -337,18 +335,18 @@ class Experiment_2D():
                 T[3, i, i+width] = make_right_prob
                 T[3, i, i] = 1 - make_right_prob          
 
+        # TODO: Should this have 1 prob of going back to itself?
         def make_absorbing(idx):
             for i in range(4):
                 for j in range(width*height):
-                    T[i, idx, j] = 0
+                    T[i, idx, j] = int(idx == j)
+        
         
         # make reward states absorbing
         for idx in rewards_dict:
             if rewards_dict[idx] > 0:
                 make_absorbing(idx)
         
-        # print("AKLAJFLKSJFLKJ", T)
-
         # previous state, action, new state
         R = np.zeros((width*height, 4, width*height))
 
@@ -377,6 +375,18 @@ class Experiment_2D():
     def confident(self, make_right_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
         S, A, T, R, gamma = self.make_MDP_params(self.height, self.width, make_right_prob, self.rewards_dict, self.gamma)
+        self.mdp = MDP_2D(S, A, T, R, gamma)
+
+    def pessimistic(self, scaling):
+        # probability is LOWER than the "true": UNDERCONFIDENT
+        S, A, T, R, gamma = self.make_MDP_params(self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma)
+
+        # Change the transition probabilities to be more pessimistic
+        neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
+
+        T[:, :, neg_rew_idx] *= scaling
+        T /= T.sum(axis=2, keepdims=True)
+
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
@@ -418,7 +428,7 @@ if __name__ == '__main__':
     # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
     for prob in np.arange(0.01, 1, 0.1):
         test.mdp.reset()
-        confident = test.confident(make_right_prob = prob)
+        confident = test.confident(make_right_prob=prob)
         if prob < default_prob:
             test.mdp.solve('Underconfident Agent: p={:.3f}'.format(prob))
         elif prob > default_prob:
