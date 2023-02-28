@@ -5,11 +5,11 @@ import pandas as pd
 default_prob = 1
 default_gamma = 0.9
 sns.set()
-setup_name = 'Myopic vs Confidence'
-setup_name = setup_name.replace(' ', '_').lower()
+setup_name = "Myopic vs Confidence"
+setup_name = setup_name.replace(" ", "_").lower()
 
-if not os.path.exists(f'images/{setup_name}'):
-   os.makedirs(f'images/{setup_name}')
+if not os.path.exists(f"images/{setup_name}"):
+    os.makedirs(f"images/{setup_name}")
 
 length = 10
 starting_state = 7
@@ -22,7 +22,7 @@ rewards_dict = {}
 for i in range(length):
     rewards_dict[i] = latent_cost
 
-for i in range(starting_state+1, length):
+for i in range(starting_state + 1, length):
     rewards_dict[i] = big_cost
 
 if small_reward_mag != -1:
@@ -40,7 +40,11 @@ for gamma in gammas:
     choices_row = []
     for prob in probs:
         test = Experiment_1D(length, prob, rewards_dict=rewards_dict, gamma=gamma)
-        value, policy = test.mdp.solve(setup_name=setup_name, policy_name='Custom Agent: \u03B3={:.3f}, p={:.3f}'.format(gamma, prob), heatmap=False)
+        value, policy = test.mdp.solve(
+            setup_name=setup_name,
+            policy_name="Custom Agent: \u03B3={:.3f}, p={:.3f}".format(gamma, prob),
+            heatmap=False,
+        )
         test.mdp.reset()
         # if value[starting_state] <= 0:
         #     choices_row.append(-1)
@@ -53,11 +57,13 @@ gammas = list(gammas.round(3))
 choices_df = pd.DataFrame(choices, columns=probs)
 choices_df.index = pd.Index(gammas)
 
-hmap = sns.heatmap(choices_df, annot=True, fmt='', cbar=False, cbar_kws={'label': 'Choice'})
-title = f'Long Path: {starting_state}, Short Path: {length-starting_state-1}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}'
-hmap.set(xlabel='Confidence', ylabel='Gamma', title=title)
+hmap = sns.heatmap(
+    choices_df, annot=True, fmt="", cbar=False, cbar_kws={"label": "Choice"}
+)
+title = f"Long Path: {starting_state}, Short Path: {length-starting_state-1}, Latent Cost: {latent_cost}, Big Cost: {big_cost}, Reward: {reward_mag}"
+hmap.set(xlabel="Confidence", ylabel="Gamma", title=title)
 hmap = hmap.figure
-plt.savefig(f'images/{setup_name}/summary.png')
+plt.savefig(f"images/{setup_name}/summary.png")
 plt.clf()
 
 # print(choices_df)
