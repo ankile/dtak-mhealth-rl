@@ -199,8 +199,31 @@ class MDP_2D:
             if difference < self.theta:
                 break
 
+    def save_heatmap(self, setup_name, policy_name, labels):
+        # draw heatmap and save in figure
+        hmap = sns.heatmap(
+            self.V,
+            annot=labels,
+            fmt="",
+            xticklabels=False,
+            yticklabels=False,
+            cbar=False,
+            cbar_kws={"label": "Value"},
+            annot_kws={"size": 25 / np.sqrt(len(self.V))},
+        )
+        hmap.set(xlabel="States", title=f"{policy_name} Value Iteration")
+        hmap = hmap.figure
+        file_name = policy_name.replace(" ", "_").lower()
+        setup_name = setup_name.replace(" ", "_").lower()
+        print(file_name)
+        plt.savefig(f"images/{setup_name}/{file_name}.png")
+        plt.clf()
+
     def solve(
-        self, setup_name="Placeholder Setup Name", policy_name="Placeholder Policy Name"
+        self,
+        setup_name="Placeholder Setup Name",
+        policy_name="Placeholder Policy Name",
+        save_heatmap=True,
     ):
         self.value_iteration()
 
@@ -254,24 +277,9 @@ class MDP_2D:
 
             labels = np.array(grid)
 
-            # draw heatmap and save in figure
-            hmap = sns.heatmap(
-                self.V,
-                annot=labels,
-                fmt="",
-                xticklabels=False,
-                yticklabels=False,
-                cbar=False,
-                cbar_kws={"label": "Value"},
-                annot_kws={"size": 25 / np.sqrt(len(self.V))},
-            )
-            hmap.set(xlabel="States", title=f"{policy_name} Value Iteration")
-            hmap = hmap.figure
-            file_name = policy_name.replace(" ", "_").lower()
-            setup_name = setup_name.replace(" ", "_").lower()
-            print(file_name)
-            plt.savefig(f"images/{setup_name}/{file_name}.png")
-            plt.clf()
+            if save_heatmap:
+                self.save_heatmap(setup_name, policy_name, labels)
+
 
         return self.V, self.policy
 
@@ -480,7 +488,7 @@ class Experiment_2D:
         )
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
-    def pessimistic(self, scaling):
+    def pessimistic(self, scaling, new_gamma=None):
         # probability is LOWER than the "true": UNDERCONFIDENT
         S, A, T, R, gamma = self.make_MDP_params(
             self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
@@ -491,6 +499,9 @@ class Experiment_2D:
 
         T[:, :, neg_rew_idx] *= scaling
         T /= T.sum(axis=2, keepdims=True)
+
+        if new_gamma is not None:
+            gamma = new_gamma
 
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
