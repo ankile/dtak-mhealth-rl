@@ -1,0 +1,324 @@
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+class MDP_2D:
+    def __init__(self, S, A, T, R, gamma):
+        self.S = S
+        self.A = A
+        self.T = T
+        self.R = R
+        self.gamma = gamma
+
+        self.height = self.S.shape[0]
+        self.width = self.S.shape[1]
+
+        self.V = np.zeros(self.S.shape)
+        self.policy = np.zeros(self.S.shape)
+        self.theta = np.nextafter(0, 1)
+        self.state = self.S[0][0]
+
+        # sanity checks:
+        assert T.shape == (
+            len(self.A),
+            self.height * self.width,
+            self.height * self.width,
+        )  # action x state x state
+        assert R.shape == (
+            self.height * self.width,
+            len(self.A),
+            self.height * self.width,
+        )  # state x action x next_state
+
+    def bellman_eq(self, state):
+        vals = np.zeros(len(self.A))
+
+        # TODO: Think about: IF ACTION IMPOSSIBLE, ASSIGN np.NINF value -- do this by if the sum of the self.T[action][state] = 0 then do this
+        for action in self.A:
+            to_sum = []
+            for p in range(len(self.T[action][state])):
+                to_sum.append(
+                    self.T[action][state][p]
+                    * (
+                        self.R[state][action][p]
+                        + (self.gamma * self.V[p // self.width][p % self.width])
+                    )
+                )
+
+            vals[action] = sum(to_sum)
+
+        def check_action(state, width, height):
+            if state % width == 0:  # left-border
+                vals[0] = np.NINF
+            if state % width == width - 1:  # right-border
+                vals[1] = np.NINF
+            if state < width:  # top
+                vals[2] = np.NINF
+            if state >= width * (height - 1):  # bottom
+                vals[3] = np.NINF
+
+        check_action(state, self.width, self.height)
+
+        return vals
+
+    def value_iteration(self):
+        while True:
+            difference = 0
+            for row in self.S:
+                for state in row:
+                    old_V = self.V[state // self.width][state % self.width]
+                    v = self.bellman_eq(state)
+
+                    self.policy[state // self.width][state % self.width] = np.argmax(v)
+                    self.V[state // self.width][state % self.width] = np.max(v)
+
+                    difference = max(
+                        difference,
+                        np.abs(old_V - self.V[state // self.width][state % self.width]),
+                    )
+
+            if difference < self.theta:
+                break
+
+    def save_heatmap(self, setup_name, policy_name, labels):
+        # draw heatmap and save in figure
+        hmap = sns.heatmap(
+            self.V,
+            annot=labels,
+            fmt="",
+            xticklabels=False,
+            yticklabels=False,
+            cbar=False,
+            cbar_kws={"label": "Value"},
+            annot_kws={"size": 25 / np.sqrt(len(self.V))},
+        )
+        hmap.set(xlabel="States", title=f"{policy_name} Value Iteration")
+        hmap = hmap.figure
+        file_name = policy_name.replace(" ", "_").lower()
+        setup_name = setup_name.replace(" ", "_").lower()
+        print(file_name)
+        plt.savefig(f"images/{setup_name}/{file_name}.png")
+        plt.clf()
+
+    def solve(
+        self,
+        setup_name="Placeholder Setup Name",
+        policy_name="Placeholder Policy Name",
+        save_heatmap=True,
+    ):
+        self.value_iteration()
+
+        if len(self.policy) > 0:
+            grid = []
+            precision = 3
+            for row in self.S:
+                grid_row = []
+                for state in row:
+                    if self.policy[state // self.width][state % self.width] == 0:
+                        grid_row.append(
+                            "\u2190 \n "
+                            + str(
+                                round(
+                                    self.V[state // self.width][state % self.width],
+                                    precision,
+                                )
+                            )
+                        )
+                    elif self.policy[state // self.width][state % self.width] == 1:
+                        grid_row.append(
+                            "\u2192 \n "
+                            + str(
+                                round(
+                                    self.V[state // self.width][state % self.width],
+                                    precision,
+                                )
+                            )
+                        )
+                    elif self.policy[state // self.width][state % self.width] == 2:
+                        grid_row.append(
+                            "\u2191 \n "
+                            + str(
+                                round(
+                                    self.V[state // self.width][state % self.width],
+                                    precision,
+                                )
+                            )
+                        )
+                    else:
+                        grid_row.append(
+                            "\u2193 \n "
+                            + str(
+                                round(
+                                    self.V[state // self.width][state % self.width],
+                                    precision,
+                                )
+                            )
+                        )
+                grid.append(grid_row)
+
+            labels = np.array(grid)
+
+            if save_heatmap:
+                self.save_heatmap(setup_name, policy_name, labels)
+
+        return self.V, self.policy
+
+    def reset(self):
+        self.state = self.S[0][0]
+
+
+class Experiment_2D:
+    def __init__(
+        self,
+        height,
+        width,
+        make_right_prob=0.8,
+        rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
+        gamma=0.9,
+    ):
+        fixed_rewards_dict = {}
+        for idx in rewards_dict:
+            if not (idx >= 0 and idx < width * height):
+                fixed_rewards_dict[idx % (width * height)] = rewards_dict[idx]
+            else:
+                fixed_rewards_dict[idx] = rewards_dict[idx]
+        rewards_dict = fixed_rewards_dict
+
+        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(
+            height, width, make_right_prob, rewards_dict, gamma
+        )
+        self.rewards_dict = rewards_dict
+        self.height = height
+        self.width = width
+        self.gamma = gamma
+        self.make_right_prob = make_right_prob
+        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
+
+    def make_MDP_params(self, height, width, make_right_prob, rewards_dict, gamma):
+        S = np.arange(height * width).reshape(height, -1)
+        A = np.array((0, 1, 2, 3))  # 0 is left, 1 is right, 2 is up, 3 is down
+
+        T = np.zeros((A.shape[0], height * width, height * width))
+
+        # left move transition probabilities
+        for i in range(width * height):
+            # left-border states cannot allow further left movement
+            if i % width == 0:
+                T[0, i, i] = 1
+            else:
+                T[0, i, i - 1] = make_right_prob
+                T[0, i, i] = 1 - make_right_prob
+
+        # right move transition probabilities
+        for i in range(width * height):
+            # right-border states cannot allow further right movement
+            if i % width == width - 1:
+                T[1, i, i] = 1
+            else:
+                T[1, i, i + 1] = make_right_prob
+                T[1, i, i] = 1 - make_right_prob
+
+        # up move transition probabilities
+        for i in range(width * height):
+            # top states cannot allow further up movement
+            if i < width:
+                T[2, i, i] = 1
+            else:
+                T[2, i, i - width] = make_right_prob
+                T[2, i, i] = 1 - make_right_prob
+
+        # dowm move transition probabilities
+        for i in range(width * height):
+            # bottom states cannot allow further down movement
+            if i >= width * (height - 1):
+                T[3, i, i] = 1
+            else:
+                T[3, i, i + width] = make_right_prob
+                T[3, i, i] = 1 - make_right_prob
+
+        def make_absorbing(idx):
+            for i in range(4):
+                for j in range(width * height):
+                    T[i, idx, j] = int(idx == j)
+
+        # make reward states absorbing
+        for idx in rewards_dict:
+            if rewards_dict[idx] > 0:
+                make_absorbing(idx)
+
+        # previous state, action, new state
+        R = np.zeros((width * height, 4, width * height))
+
+        def assign_reward(idx, magnitude):
+            # check right border
+            if idx + 1 % width != width and idx + 1 < width * height:
+                R[idx + 1, 0, idx] = magnitude
+            # check left border
+            if idx - 1 % width != width - 1 and idx - 1 >= 0:
+                R[idx - 1, 1, idx] = magnitude
+            # check bottom border
+            if idx <= width * (height - 1) and idx + width < width * height:
+                R[idx + width, 2, idx] = magnitude
+            # check top border
+            if idx >= width and idx - width >= 0:
+                R[idx - width, 3, idx] = magnitude
+
+        for idx in rewards_dict:
+            assign_reward(idx, rewards_dict[idx])
+
+        return S, A, T, R, gamma
+
+    def myopic(self, gamma):
+        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, gamma)
+
+    def confident(self, make_right_prob):
+        # probability is LOWER than the "true": UNDERCONFIDENT
+        S, A, T, R, gamma = self.make_MDP_params(
+            self.height, self.width, make_right_prob, self.rewards_dict, self.gamma
+        )
+        self.mdp = MDP_2D(S, A, T, R, gamma)
+
+    def pessimistic(self, scaling, new_gamma=None):
+        S, A, T, R, gamma = self.make_MDP_params(
+            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+        )
+
+        # Change the transition probabilities to be more pessimistic
+        neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
+
+        T[:, :, neg_rew_idx] *= scaling
+        T /= T.sum(axis=2, keepdims=True)
+
+        if new_gamma is not None:
+            gamma = new_gamma
+
+        self.mdp = MDP_2D(S, A, T, R, gamma)
+
+    def pessimistic_new(self, scaling, new_gamma=None):
+        S, A, T, R, gamma = self.make_MDP_params(
+            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+        )
+
+        # Change the transition probabilities to be more pessimistic
+        neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
+
+        T[:, :, neg_rew_idx] *= scaling
+        T /= T.sum(axis=2, keepdims=True)
+
+        if new_gamma is not None:
+            gamma = new_gamma
+
+        self.mdp = MDP_2D(S, A, T, R, gamma)
+
+    def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
+        S, A, T, R, gamma = self.make_MDP_params(
+            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+        )
+        R[agent_R_idx - 1, 1, agent_R_idx] = agent_R_magnitude
+        R[agent_R_idx + 1, 0, agent_R_idx] = agent_R_magnitude
+
+        if ignore_default_R:
+            R[length - 2, 1, length - 1] = 0
+
+        self.mdp = MDP_2D(S, A, T, R, gamma)
