@@ -1,4 +1,4 @@
-from mdp import *
+from worlds.mdp import *
 import os
 
 default_prob = 0.8

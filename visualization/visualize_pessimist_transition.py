@@ -1,7 +1,7 @@
-from mdp import *
+from worlds.mdp import *
 import os
 from datetime import datetime
-from wall import wall
+from utils.wall import wall
 from tqdm import tqdm
 
 # import mpatches for the legend
@@ -110,4 +110,3 @@ ax.text(
 # Show and save the figure
 plt.show()
 fig.savefig(f"images/{setup_name}/pessimist_transition.png")
-

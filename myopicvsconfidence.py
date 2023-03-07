@@ -1,6 +1,8 @@
-from mdp import *
+from ..dtak.worlds.mdp import Experiment_1D
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 default_prob = 1
 default_gamma = 0.9

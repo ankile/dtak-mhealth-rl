@@ -1,4 +1,4 @@
-from mdp import *
+from worlds.mdp import *
 import os
 
 

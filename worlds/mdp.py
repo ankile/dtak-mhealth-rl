@@ -2,7 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utils import Actions
+from utils.enums import Actions
 
 
 class MDP:
@@ -280,7 +280,6 @@ class MDP_2D:
             if save_heatmap:
                 self.save_heatmap(setup_name, policy_name, labels)
 
-
         return self.V, self.policy
 
     def reset(self):
@@ -445,7 +444,6 @@ class Experiment_2D:
                 T[3, i, i + width] = make_right_prob
                 T[3, i, i] = 1 - make_right_prob
 
-        # TODO: Should this have 1 prob of going back to itself?
         def make_absorbing(idx):
             for i in range(4):
                 for j in range(width * height):
@@ -489,7 +487,22 @@ class Experiment_2D:
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def pessimistic(self, scaling, new_gamma=None):
-        # probability is LOWER than the "true": UNDERCONFIDENT
+        S, A, T, R, gamma = self.make_MDP_params(
+            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+        )
+
+        # Change the transition probabilities to be more pessimistic
+        neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
+
+        T[:, :, neg_rew_idx] *= scaling
+        T /= T.sum(axis=2, keepdims=True)
+
+        if new_gamma is not None:
+            gamma = new_gamma
+
+        self.mdp = MDP_2D(S, A, T, R, gamma)
+
+    def pessimistic_new(self, scaling, new_gamma=None):
         S, A, T, R, gamma = self.make_MDP_params(
             self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
         )

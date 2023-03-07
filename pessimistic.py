@@ -1,6 +1,6 @@
-from mdp import *
+from worlds.mdp import *
 import os
-from wall import wall
+from utils.wall import wall
 
 default_prob = 0.8
 sns.set()
