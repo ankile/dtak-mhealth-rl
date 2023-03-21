@@ -41,8 +41,10 @@ def run_experiment(experiment, scalers, gammas, name, pbar=True):
     return results, probs
 
 
-def plot_strategy_heatmap(results, probs, gammas, ax):
-    ax = sns.heatmap(results, annot=True, cmap="Blues", fmt="d", ax=ax, cbar=False)
+def plot_strategy_heatmap(
+    results, probs, gammas, ax, title=None, legend=True, annot=True, ax_labels=True,
+):
+    ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
     # Create a FixedLocator with a tick per gamma
     ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 1)))
@@ -53,18 +55,20 @@ def plot_strategy_heatmap(results, probs, gammas, ax):
     )
     ax.set_yticklabels(probs.round(2), size=8)
     ax.invert_yaxis()
-    ax.set_xlabel("Gamma")
-    ax.set_ylabel("Confidence")
+    if ax_labels:
+        ax.set_xlabel("Gamma")
+        ax.set_ylabel("Confidence")
 
-    ax.set_title(f"Strategies for different gammas and pessimism")
+    ax.set_title(title or "Optimal strategy (1: Right, 3: Down)")
 
     # Set legend to the right to explain the numbers 1 and 3 with same colors as the heatmap
-    ax.legend(
-        handles=[
-            mpatches.Patch(color="white", label="1: Right"),
-            mpatches.Patch(color="darkblue", label="3: Down"),
-        ],
-    )
+    if legend:
+        ax.legend(
+            handles=[
+                mpatches.Patch(color="white", label="1: Right"),
+                mpatches.Patch(color="darkblue", label="3: Down"),
+            ],
+        )
 
 
 def plot_world_reward(experiment, setup_name, ax, save=False):
