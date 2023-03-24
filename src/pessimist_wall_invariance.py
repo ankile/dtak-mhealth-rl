@@ -27,23 +27,21 @@ default_config = dict(
 )
 
 # Set up parameters to search over
-scalers = np.arange(0.1, 5.5, 1)
+scalers = np.arange(0.1, 10.5, 2)
 gammas = np.arange(0.4, 1, 0.05 / 2)
 
+cols = 7
+
 parameters = {
-    'reward_mag': [100, 200, 300, 400, 500],
-    'neg_mag': [0, -5, -10, -15, -20],
-    'latent_cost': [1, 0, -1, -2, -3],
-    'prob': [0.5, 0.6, 0.7, 0.8, 0.9],
+    'reward_mag': np.linspace(100, 500, cols),
+    'neg_mag': np.linspace(-20, 0, cols),
+    'latent_cost': [-3, -2, -1, 0, 1, 2, 3],
+    'prob': np.linspace(0.5, 0.95, cols),
+    'width': [3, 4, 5, 6, 7, 8, 9],
+    'height': [2, 3, 4, 5, 6, 7, 8],
 }
-# parameters = {
-#     'reward_mag': [100, 300, 500],
-#     'neg_mag': [0, -10, -20],
-#     'latent_cost': [1, -1, -3],
-# }
 
 rows = len(parameters)
-cols = len(list(parameters.values())[0])
 
 # Create the figure and axes to plot on
 fig, axs = plt.subplots(nrows=rows, ncols=cols, figsize=(16, 10), sharex=True, sharey=True)
@@ -71,7 +69,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
             probs,
             gammas,
             ax=ax,
-            title=f"{param_name}={value}",
+            title=f"{param_name}={round(value, 2)}",
             annot=False,
             legend=j == 0,
             ax_labels=False,

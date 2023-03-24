@@ -53,7 +53,7 @@ def plot_strategy_heatmap(
         rotation=90,
         size=8,
     )
-    ax.set_yticklabels(probs.round(2), size=8)
+    ax.set_yticklabels(probs.round(2), size=8, rotation=0)
     ax.invert_yaxis()
     if ax_labels:
         ax.set_xlabel("Gamma")
