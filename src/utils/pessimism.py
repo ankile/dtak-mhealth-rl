@@ -10,7 +10,7 @@ from utils.wall import wall
 from worlds.mdp2d import Experiment_2D
 
 
-def run_experiment(experiment, scalers, gammas, name, pbar=True):
+def run_experiment(experiment: Experiment_2D, scalers, gammas, name, pbar=True):
     results = np.zeros((len(scalers), len(gammas)), dtype=int)
     probs = np.zeros(len(scalers), dtype=float)
 
@@ -26,7 +26,8 @@ def run_experiment(experiment, scalers, gammas, name, pbar=True):
                 gamma=gamma,
             )
             experiment.mdp.reset()
-            experiment.pessimistic(scaling=scaling, new_gamma=gamma)
+            # experiment.pessimistic(scaling=scaling, new_gamma=gamma)
+            experiment.pessimistic_new(scaling=scaling, new_gamma=gamma)
             experiment.mdp.solve(
                 setup_name=name,
                 policy_name=f"Pessimistic scale={scaling:.1f} gamma={gamma:.1f}",
@@ -42,7 +43,14 @@ def run_experiment(experiment, scalers, gammas, name, pbar=True):
 
 
 def plot_strategy_heatmap(
-    results, probs, gammas, ax, title=None, legend=True, annot=True, ax_labels=True,
+    results,
+    probs,
+    gammas,
+    ax,
+    title=None,
+    legend=True,
+    annot=True,
+    ax_labels=True,
 ):
     ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
@@ -89,8 +97,15 @@ def plot_world_reward(experiment, setup_name, ax, save=False):
 
 
 def setup_wall_world_experiment(
-    setup_name, height, width, prob, gamma, neg_mag, reward_mag, latent_cost
-):
+    setup_name,
+    height,
+    width,
+    prob,
+    gamma,
+    neg_mag,
+    reward_mag,
+    latent_cost,
+) -> Experiment_2D:
     # Set up the experiment
     sns.set()
     if not os.path.exists(f"images/{setup_name}"):
