@@ -46,10 +46,10 @@ def plot_strategy_heatmap(
 ):
     ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
-    # Create a FixedLocator with a tick per gamma
-    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 1)))
+    # Create a FixedLocator with a tick for every other value of gamma
+    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 2)))
     ax.set_xticklabels(
-        gammas.round(5),
+        gammas[::2].round(5),
         rotation=90,
         size=8,
     )
@@ -107,5 +107,5 @@ def setup_wall_world_experiment(
     )
 
     return Experiment_2D(
-        height, width, rewards_dict=wall_dict, gamma=gamma, make_right_prob=prob
+        height, width, rewards_dict=wall_dict, gamma=gamma, action_success_prob=prob
     )
