@@ -196,42 +196,26 @@ class Experiment_2D:
         self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
 
 
-    def _fill_transition_matrix(self, T, width, height, action_success_prob):
-         # left move transition probabilities
-        for i in range(width * height):
-            # left-border states cannot allow further left movement
-            if i % width == 0:
-                T[0, i, i] = 1
-            else:
-                T[0, i, i - 1] = action_success_prob
-                T[0, i, i] = 1 - action_success_prob
+    def _fill_transition_matrix(self, T, A, width, height, action_success_prob):
+        for action in A:
+            for i in range(width * height):
+                row, col = i // width, i % width
 
-        # right move transition probabilities
-        for i in range(width * height):
-            # right-border states cannot allow further right movement
-            if i % width == width - 1:
-                T[1, i, i] = 1
-            else:
-                T[1, i, i + 1] = action_success_prob
-                T[1, i, i] = 1 - action_success_prob
+                if action == 0:  # left
+                    target = i - 1 if col > 0 else i
+                elif action == 1:  # right
+                    target = i + 1 if col < width - 1 else i
+                elif action == 2:  # up
+                    target = i - width if row > 0 else i
+                else:  # down
+                    target = i + width if row < height - 1 else i
 
-        # up move transition probabilities
-        for i in range(width * height):
-            # top states cannot allow further up movement
-            if i < width:
-                T[2, i, i] = 1
-            else:
-                T[2, i, i - width] = action_success_prob
-                T[2, i, i] = 1 - action_success_prob
+                if target == i:
+                    T[action, i, i] = 1
+                else:
+                    T[action, i, target] = action_success_prob
+                    T[action, i, i] = 1 - action_success_prob
 
-        # dowm move transition probabilities
-        for i in range(width * height):
-            # bottom states cannot allow further down movement
-            if i >= width * (height - 1):
-                T[3, i, i] = 1
-            else:
-                T[3, i, i + width] = action_success_prob
-                T[3, i, i] = 1 - action_success_prob
 
     def make_MDP_params(self, height, width, action_success_prob, rewards_dict, gamma):
         S = np.arange(height * width).reshape(height, -1)
@@ -239,7 +223,7 @@ class Experiment_2D:
 
         T = np.zeros((A.shape[0], height * width, height * width))
 
-        self._fill_transition_matrix(T, width, height, action_success_prob)
+        self._fill_transition_matrix(T, A, width, height, action_success_prob)
 
         def make_absorbing(idx):
             for i in range(4):
