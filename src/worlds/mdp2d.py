@@ -173,7 +173,7 @@ class Experiment_2D:
         self,
         height,
         width,
-        make_right_prob=0.8,
+        action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
     ):
@@ -186,56 +186,94 @@ class Experiment_2D:
         rewards_dict = fixed_rewards_dict
 
         self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(
-            height, width, make_right_prob, rewards_dict, gamma
+            height, width, action_success_prob, rewards_dict, gamma
         )
         self.rewards_dict = rewards_dict
         self.height = height
         self.width = width
         self.gamma = gamma
-        self.make_right_prob = make_right_prob
+        self.action_success_prob = action_success_prob
         self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
 
-    def make_MDP_params(self, height, width, make_right_prob, rewards_dict, gamma):
+    @staticmethod
+    def _get_target(i, action, width, height):
+        row, col = i // width, i % width
+        left, right, up, down = i - 1, i + 1, i - width, i + width
+
+        if action == 0:  # left
+            target = left if col > 0 else i
+        elif action == 1:  # right
+            target = right if col < width - 1 else i
+        elif action == 2:  # up
+            target = up if row > 0 else i
+        else:  # down
+            target = down if row < height - 1 else i
+
+        return target
+
+    @staticmethod
+    def _fill_transition_matrix(
+        T, A, width, height, action_success_prob, mode="simple"
+    ):
+        def _set_probs_for_state_simple(i, action, target):
+            if target == i:
+                T[action, i, i] = 1
+            else:
+                T[action, i, target] = action_success_prob
+                T[action, i, i] = 1 - action_success_prob
+
+        def _set_probs_for_state(i, action, target):
+            def in_bounds(row, col):
+                return 0 <= row < height and 0 <= col < width
+
+            row, col = i // width, i % width
+
+            # Update transition probabilities
+            T[action, i, target] = action_success_prob
+
+            # Calculate remaining probability
+            remaining_prob = (1 - action_success_prob) / 4
+
+            for d in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+                dr, dc = d
+                r, c = row + dr, col + dc
+                if in_bounds(r, c):
+                    neighbor = r * width + c
+                    T[action, i, neighbor] += remaining_prob
+                else:
+                    T[action, i, i] += remaining_prob
+
+        set_functions = {
+            "simple": _set_probs_for_state_simple,
+            "full": _set_probs_for_state,
+        }
+
+        assert mode in set_functions, f"Mode {mode} not supported"
+        set_fun = set_functions[mode]
+
+        for action in A:
+            for i in range(width * height):
+                # Determine the intended target
+                target = Experiment_2D._get_target(i, action, width, height)
+                set_fun(i, action, target)
+
+    def make_MDP_params(
+        self,
+        height,
+        width,
+        action_success_prob,
+        rewards_dict,
+        gamma,
+        transition_mode="simple",
+    ):
         S = np.arange(height * width).reshape(height, -1)
         A = np.array((0, 1, 2, 3))  # 0 is left, 1 is right, 2 is up, 3 is down
 
         T = np.zeros((A.shape[0], height * width, height * width))
 
-        # left move transition probabilities
-        for i in range(width * height):
-            # left-border states cannot allow further left movement
-            if i % width == 0:
-                T[0, i, i] = 1
-            else:
-                T[0, i, i - 1] = make_right_prob
-                T[0, i, i] = 1 - make_right_prob
-
-        # right move transition probabilities
-        for i in range(width * height):
-            # right-border states cannot allow further right movement
-            if i % width == width - 1:
-                T[1, i, i] = 1
-            else:
-                T[1, i, i + 1] = make_right_prob
-                T[1, i, i] = 1 - make_right_prob
-
-        # up move transition probabilities
-        for i in range(width * height):
-            # top states cannot allow further up movement
-            if i < width:
-                T[2, i, i] = 1
-            else:
-                T[2, i, i - width] = make_right_prob
-                T[2, i, i] = 1 - make_right_prob
-
-        # dowm move transition probabilities
-        for i in range(width * height):
-            # bottom states cannot allow further down movement
-            if i >= width * (height - 1):
-                T[3, i, i] = 1
-            else:
-                T[3, i, i + width] = make_right_prob
-                T[3, i, i] = 1 - make_right_prob
+        self._fill_transition_matrix(
+            T, A, width, height, action_success_prob, mode=transition_mode
+        )
 
         def make_absorbing(idx):
             for i in range(4):
@@ -272,16 +310,25 @@ class Experiment_2D:
     def myopic(self, gamma):
         self.mdp = MDP_2D(self.S, self.A, self.T, self.R, gamma)
 
-    def confident(self, make_right_prob):
+    def confident(self, action_success_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height, self.width, make_right_prob, self.rewards_dict, self.gamma
+            self.height,
+            self.width,
+            action_success_prob,
+            self.rewards_dict,
+            self.gamma,
         )
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def pessimistic(self, scaling, new_gamma=None):
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+            self.height,
+            self.width,
+            self.action_success_prob,
+            self.rewards_dict,
+            self.gamma,
+            transition_mode="simple",
         )
 
         # Change the transition probabilities to be more pessimistic
@@ -297,7 +344,12 @@ class Experiment_2D:
 
     def pessimistic_new(self, scaling, new_gamma=None):
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+            self.height,
+            self.width,
+            self.action_success_prob,
+            self.rewards_dict,
+            self.gamma,
+            transition_mode="full",
         )
 
         # Change the transition probabilities to be more pessimistic
@@ -313,7 +365,11 @@ class Experiment_2D:
 
     def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height, self.width, self.make_right_prob, self.rewards_dict, self.gamma
+            self.height,
+            self.width,
+            self.action_success_prob,
+            self.rewards_dict,
+            self.gamma,
         )
         R[agent_R_idx - 1, 1, agent_R_idx] = agent_R_magnitude
         R[agent_R_idx + 1, 0, agent_R_idx] = agent_R_magnitude

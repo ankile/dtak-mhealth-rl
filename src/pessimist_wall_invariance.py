@@ -33,18 +33,20 @@ gammas = np.arange(0.4, 1, 0.05 / 2)
 cols = 7
 
 parameters = {
-    'reward_mag': np.linspace(100, 500, cols),
-    'neg_mag': np.linspace(-20, 0, cols),
-    'latent_cost': [-3, -2, -1, 0, 1, 2, 3],
-    'prob': np.linspace(0.5, 0.95, cols),
-    'width': [3, 4, 5, 6, 7, 8, 9],
-    'height': [2, 3, 4, 5, 6, 7, 8],
+    "reward_mag": np.linspace(100, 500, cols),
+    "neg_mag": np.linspace(-20, 0, cols),
+    "latent_cost": [-3, -2, -1, 0, 1, 2, 3],
+    "prob": np.linspace(0.5, 0.95, cols),
+    "width": [3, 4, 5, 6, 7, 8, 9],
+    "height": [2, 3, 4, 5, 6, 7, 8],
 }
 
 rows = len(parameters)
 
 # Create the figure and axes to plot on
-fig, axs = plt.subplots(nrows=rows, ncols=cols, figsize=(16, 10), sharex=True, sharey=True)
+fig, axs = plt.subplots(
+    nrows=rows, ncols=cols, figsize=(16, 10), sharex=True, sharey=True
+)
 
 fig.subplots_adjust(top=0.9)
 
@@ -61,7 +63,9 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
         test = setup_wall_world_experiment(**config, setup_name=setup_name)
 
         # Run the experiment
-        results, probs = run_experiment(test, scalers, gammas, name=setup_name, pbar=False)
+        results, probs = run_experiment(
+            test, scalers, gammas, name=setup_name, pbar=False
+        )
 
         # Create a heatmap of the resulting strategies on the second axis
         plot_strategy_heatmap(

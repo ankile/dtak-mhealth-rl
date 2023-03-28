@@ -10,7 +10,7 @@ from utils.wall import wall
 from worlds.mdp2d import Experiment_2D
 
 
-def run_experiment(experiment, scalers, gammas, name, pbar=True):
+def run_experiment(experiment: Experiment_2D, scalers, gammas, name, pbar=True):
     results = np.zeros((len(scalers), len(gammas)), dtype=int)
     probs = np.zeros(len(scalers), dtype=float)
 
@@ -26,7 +26,8 @@ def run_experiment(experiment, scalers, gammas, name, pbar=True):
                 gamma=gamma,
             )
             experiment.mdp.reset()
-            experiment.pessimistic(scaling=scaling, new_gamma=gamma)
+            # experiment.pessimistic(scaling=scaling, new_gamma=gamma)
+            experiment.pessimistic_new(scaling=scaling, new_gamma=gamma)
             experiment.mdp.solve(
                 setup_name=name,
                 policy_name=f"Pessimistic scale={scaling:.1f} gamma={gamma:.1f}",
@@ -42,14 +43,21 @@ def run_experiment(experiment, scalers, gammas, name, pbar=True):
 
 
 def plot_strategy_heatmap(
-    results, probs, gammas, ax, title=None, legend=True, annot=True, ax_labels=True,
+    results,
+    probs,
+    gammas,
+    ax,
+    title=None,
+    legend=True,
+    annot=True,
+    ax_labels=True,
 ):
     ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
-    # Create a FixedLocator with a tick per gamma
-    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 1)))
+    # Create a FixedLocator with a tick for every other value of gamma
+    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 2)))
     ax.set_xticklabels(
-        gammas.round(5),
+        gammas[::2].round(5),
         rotation=90,
         size=8,
     )
@@ -89,8 +97,15 @@ def plot_world_reward(experiment, setup_name, ax, save=False):
 
 
 def setup_wall_world_experiment(
-    setup_name, height, width, prob, gamma, neg_mag, reward_mag, latent_cost
-):
+    setup_name,
+    height,
+    width,
+    prob,
+    gamma,
+    neg_mag,
+    reward_mag,
+    latent_cost,
+) -> Experiment_2D:
     # Set up the experiment
     sns.set()
     if not os.path.exists(f"images/{setup_name}"):
@@ -107,5 +122,5 @@ def setup_wall_world_experiment(
     )
 
     return Experiment_2D(
-        height, width, rewards_dict=wall_dict, gamma=gamma, make_right_prob=prob
+        height, width, rewards_dict=wall_dict, gamma=gamma, action_success_prob=prob
     )
