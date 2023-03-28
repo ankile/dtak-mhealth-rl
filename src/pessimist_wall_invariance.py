@@ -67,7 +67,12 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
 
         # Run the experiment
         results, probs = run_experiment(
-            test, scalers, gammas, name=setup_name, transition_mode=transition_mode, pbar=False,
+            test,
+            scalers,
+            gammas,
+            name=setup_name,
+            transition_mode=transition_mode,
+            pbar=False,
         )
 
         # Create a heatmap of the resulting strategies on the second axis

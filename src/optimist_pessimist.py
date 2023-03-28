@@ -52,7 +52,9 @@ fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(16, 8))
 plot_world_reward(test, setup_name, ax=ax1, save=False)
 
 # Run the experiment
-results, probs = run_experiment(test, scalers, gammas, transition_mode=transition_mode, name=setup_name)
+results, probs = run_experiment(
+    test, scalers, gammas, transition_mode=transition_mode, name=setup_name
+)
 
 # Create a heatmap of the resulting strategies on the second axis
 plot_strategy_heatmap(results, probs, gammas, ax=ax2)
