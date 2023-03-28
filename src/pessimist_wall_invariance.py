@@ -26,6 +26,9 @@ default_config = dict(
     reward_mag=300,
 )
 
+# Choose the transition dynamics
+transition_mode = "full"
+
 # Set up parameters to search over
 scalers = np.arange(0.1, 10.5, 2)
 gammas = np.arange(0.4, 1, 0.05 / 2)
@@ -64,7 +67,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
 
         # Run the experiment
         results, probs = run_experiment(
-            test, scalers, gammas, name=setup_name, pbar=False
+            test, scalers, gammas, name=setup_name, transition_mode=transition_mode, pbar=False,
         )
 
         # Create a heatmap of the resulting strategies on the second axis
@@ -87,6 +90,9 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
 
 # Save the figure
 setup_config_string = ",".join(f"{k}={v}" for k, v in default_config.items())
+
+# Add transition mode to the config string
+setup_config_string += f",t={transition_mode}"
 
 fig.suptitle(f"Pessimist Invariance ({setup_config_string})")
 plt.tight_layout()
