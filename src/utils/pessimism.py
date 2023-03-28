@@ -10,7 +10,7 @@ from utils.wall import wall
 from worlds.mdp2d import Experiment_2D
 
 
-def run_experiment(experiment: Experiment_2D, scalers, gammas, name, pbar=True):
+def run_experiment(experiment: Experiment_2D, scalers, gammas, name, transition_mode, pbar=True):
     results = np.zeros((len(scalers), len(gammas)), dtype=int)
     probs = np.zeros(len(scalers), dtype=float)
 
@@ -26,8 +26,7 @@ def run_experiment(experiment: Experiment_2D, scalers, gammas, name, pbar=True):
                 gamma=gamma,
             )
             experiment.mdp.reset()
-            # experiment.pessimistic(scaling=scaling, new_gamma=gamma)
-            experiment.pessimistic_new(scaling=scaling, new_gamma=gamma)
+            experiment.pessimistic(scaling=scaling, new_gamma=gamma, transition_mode=transition_mode)
             experiment.mdp.solve(
                 setup_name=name,
                 policy_name=f"Pessimistic scale={scaling:.1f} gamma={gamma:.1f}",

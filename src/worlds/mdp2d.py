@@ -321,35 +321,14 @@ class Experiment_2D:
         )
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
-    def pessimistic(self, scaling, new_gamma=None):
+    def pessimistic(self, scaling, new_gamma=None, transition_mode="simple"):
         S, A, T, R, gamma = self.make_MDP_params(
             self.height,
             self.width,
             self.action_success_prob,
             self.rewards_dict,
             self.gamma,
-            transition_mode="simple",
-        )
-
-        # Change the transition probabilities to be more pessimistic
-        neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
-
-        T[:, :, neg_rew_idx] *= scaling
-        T /= T.sum(axis=2, keepdims=True)
-
-        if new_gamma is not None:
-            gamma = new_gamma
-
-        self.mdp = MDP_2D(S, A, T, R, gamma)
-
-    def pessimistic_new(self, scaling, new_gamma=None):
-        S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
-            self.action_success_prob,
-            self.rewards_dict,
-            self.gamma,
-            transition_mode="full",
+            transition_mode=transition_mode,
         )
 
         # Change the transition probabilities to be more pessimistic
