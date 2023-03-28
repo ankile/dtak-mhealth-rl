@@ -239,7 +239,7 @@ class Experiment_2D:
                 r, c = row + dr, col + dc
                 if in_bounds(r, c):
                     neighbor = r * width + c
-                    T[action, i, neighbor] += remaining_prob
+                    T[action, i, neighbor] = remaining_prob
                 else:
                     T[action, i, i] += remaining_prob
 
