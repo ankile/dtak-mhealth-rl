@@ -35,34 +35,23 @@ default_config = dict(
 transition_mode = "simple"
 
 # Set the number of subplots per row
-cols = 7  # 7 or 5
+cols = 7  # 5, 7, 9
 
 # Set the number of scales and gammas to use
-granularity = 10  # 10 or 5
+granularity = 10  # 5, 10, 20
 
 # Set up parameters to search over
 scalers = np.linspace(-1, 8, granularity)
 gammas = np.linspace(0.4, 1, granularity)
 
-parameters = (
-    {
+parameters = {
         "reward_mag": np.linspace(100, 500, cols),
         "neg_mag": np.linspace(-20, 0, cols),
-        "latent_cost": [-3, -2, -1, 0, 1, 2, 3],
+        "latent_cost": list(range(int(cols/2), int(cols/2)+1)),
         "prob": np.linspace(0.5, 0.95, cols),
-        "width": [3, 4, 5, 6, 7, 8, 9],
-        "height": [2, 3, 4, 5, 6, 7, 8],
+        "width": list(range(6 - int(cols/2), 6 - int(cols/2)+1)),
+        "height": list(range(5 - int(cols/2), 5 - int(cols/2)+1)),
     }
-    if cols == 7
-    else {
-        "reward_mag": np.linspace(100, 500, cols),
-        "neg_mag": np.linspace(-20, 0, cols),
-        "latent_cost": [-3, -2, -1, 0, 1, 2, 3][1:-1],
-        "prob": np.linspace(0.5, 0.95, cols),
-        "width": [3, 4, 5, 6, 7, 8, 9][1:-1],
-        "height": [2, 3, 4, 5, 6, 7, 8][1:-1],
-    }
-)
 
 rows = len(parameters)
 

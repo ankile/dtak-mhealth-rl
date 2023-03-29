@@ -28,9 +28,9 @@ def run_experiment(
                 gamma=gamma,
             )
             experiment.mdp.reset()
-            # experiment.pessimistic(
-            #     scaling=scaling, new_gamma=gamma, transition_mode=transition_mode
-            # )
+            experiment.pessimistic(
+                scaling=scaling, new_gamma=gamma, transition_mode=transition_mode
+            )
             experiment.mdp.solve(
                 setup_name=name,
                 policy_name=f"Pessimistic scale={scaling:.1f} gamma={gamma:.1f}",
