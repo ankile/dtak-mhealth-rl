@@ -11,13 +11,14 @@ from worlds.mdp2d import Experiment_2D
 
 
 def run_experiment(
-    experiment: Experiment_2D, scalers, gammas, name, transition_mode, pbar=True
+    experiment: Experiment_2D, scalers, gammas, name, transition_mode, pbar: bool | tqdm = True,
 ):
     results = np.zeros((len(scalers), len(gammas)), dtype=int)
     probs = np.zeros(len(scalers), dtype=float)
 
     # Create the progress bar
-    pbar = tqdm(total=len(scalers) * len(gammas), disable=not pbar)
+    if isinstance(pbar, bool):
+        pbar = tqdm(total=len(scalers) * len(gammas), disable=not pbar)
 
     # Run the experiment
     for i, scaling_pow in enumerate(scalers):

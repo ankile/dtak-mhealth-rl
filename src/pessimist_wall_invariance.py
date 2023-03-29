@@ -41,16 +41,16 @@ cols = 7  # 5, 7, 9
 granularity = 10  # 5, 10, 20
 
 # Set up parameters to search over
-scalers = np.linspace(-1, 8, granularity)
-gammas = np.linspace(0.4, 1, granularity)
+scalers = np.linspace(-1, 5, granularity)
+gammas = np.linspace(0.4, 0.99, granularity)
 
 parameters = {
         "reward_mag": np.linspace(100, 500, cols),
         "neg_mag": np.linspace(-20, 0, cols),
-        "latent_cost": list(range(int(cols/2), int(cols/2)+1)),
+        "latent_cost": list(range(-int(cols/2), int(cols/2)+1)),
         "prob": np.linspace(0.5, 0.95, cols),
-        "width": list(range(6 - int(cols/2), 6 - int(cols/2)+1)),
-        "height": list(range(5 - int(cols/2), 5 - int(cols/2)+1)),
+        "width": list(range(6 - int(cols/2), 6 + int(cols/2)+1)),
+        "height": list(range(6 - int(cols/2), 6 + int(cols/2)+1)),
     }
 
 rows = len(parameters)
@@ -62,13 +62,12 @@ fig, axs = plt.subplots(
 
 fig.subplots_adjust(top=0.9)
 
-pbar = tqdm(total=rows * cols)
+pbar = tqdm(total=rows * cols * granularity ** 2)
 
 for i, (param_name, param_values) in enumerate(parameters.items()):
-    pbar.set_description(f"Running {param_name}")
     ax_row = axs[i]
     for j, (value, ax) in enumerate(zip(param_values, ax_row)):
-        pbar.set_postfix_str(f"{param_name}={value:.2f}")
+        pbar.set_description(f"Running {param_name}={value:.2f}")
         # Set up the experiment
         config = {**default_config, param_name: value}
         test = setup_wall_world_experiment(**config, setup_name=setup_name)
@@ -80,7 +79,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
             gammas,
             name=setup_name,
             transition_mode=transition_mode,
-            pbar=False,
+            pbar=pbar,
         )
 
         # Create a heatmap of the resulting strategies on the second axis
