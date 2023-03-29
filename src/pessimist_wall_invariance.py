@@ -44,21 +44,25 @@ granularity = 10  # 10 or 5
 scalers = np.linspace(-1, 8, granularity)
 gammas = np.linspace(0.4, 1, granularity)
 
-parameters = {
-    "reward_mag": np.linspace(100, 500, cols),
-    "neg_mag": np.linspace(-20, 0, cols),
-    "latent_cost": [-3, -2, -1, 0, 1, 2, 3],
-    "prob": np.linspace(0.5, 0.95, cols),
-    "width": [3, 4, 5, 6, 7, 8, 9],
-    "height": [2, 3, 4, 5, 6, 7, 8],
-} if cols == 7 else {
-    "reward_mag": np.linspace(100, 500, cols),
-    "neg_mag": np.linspace(-20, 0, cols),
-    "latent_cost": [-3, -2, -1, 0, 1, 2, 3][1:-1],
-    "prob": np.linspace(0.5, 0.95, cols),
-    "width": [3, 4, 5, 6, 7, 8, 9][1:-1],
-    "height": [2, 3, 4, 5, 6, 7, 8][1:-1],
-}
+parameters = (
+    {
+        "reward_mag": np.linspace(100, 500, cols),
+        "neg_mag": np.linspace(-20, 0, cols),
+        "latent_cost": [-3, -2, -1, 0, 1, 2, 3],
+        "prob": np.linspace(0.5, 0.95, cols),
+        "width": [3, 4, 5, 6, 7, 8, 9],
+        "height": [2, 3, 4, 5, 6, 7, 8],
+    }
+    if cols == 7
+    else {
+        "reward_mag": np.linspace(100, 500, cols),
+        "neg_mag": np.linspace(-20, 0, cols),
+        "latent_cost": [-3, -2, -1, 0, 1, 2, 3][1:-1],
+        "prob": np.linspace(0.5, 0.95, cols),
+        "width": [3, 4, 5, 6, 7, 8, 9][1:-1],
+        "height": [2, 3, 4, 5, 6, 7, 8][1:-1],
+    }
+)
 
 rows = len(parameters)
 
@@ -107,7 +111,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
             ax.set_xlabel("Gamma")
         if j == 0:
             ax.set_ylabel("Confidence")
-        
+
         pbar.update(1)
 
 # Save the figure
@@ -118,7 +122,5 @@ setup_config_string += f",t={transition_mode}"
 
 fig.suptitle(f"Pessimist Invariance ({setup_config_string})")
 plt.tight_layout()
-plt.savefig(
-    f"{output_dir}/{datetime.now()}.png"
-)
+plt.savefig(f"{output_dir}/{datetime.now()}.png")
 plt.show()

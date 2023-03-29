@@ -3,7 +3,6 @@ import timeit
 import numpy as np
 
 from utils.pessimism import (
-    run_experiment,
     setup_wall_world_experiment,
 )
 
@@ -29,13 +28,14 @@ transition_mode = "simple"
 scalers = np.arange(0.1, 5.5, 1)
 gammas = np.arange(0.01, 1, 0.05)
 
+
 class MDP_2D_Theta(MDP_2D):
     def __init__(self, S, A, T, R, gamma):
         super().__init__(S, A, T, R, gamma)
         self.theta = np.nextafter(0, 1)
 
-class MDP_2D_Orig(MDP_2D_Theta):
 
+class MDP_2D_Orig(MDP_2D_Theta):
     def bellman_eq(self, state):
         vals = np.zeros(len(self.A))
 
@@ -96,6 +96,7 @@ def run_experiment_with_timing(test, *args, **kwargs):
         save_heatmap=False,
     )
 
+
 n_exp = 100
 
 # Run the experiement with timing enabled by a decorator from the timeit module 3 times
@@ -113,7 +114,9 @@ test = setup_wall_world_experiment(
     latent_cost,
 )
 
-result_numpy_theta = timeit.timeit(lambda: run_experiment_with_timing(test), number=n_exp)
+result_numpy_theta = timeit.timeit(
+    lambda: run_experiment_with_timing(test), number=n_exp
+)
 print(f"Done! (t={result_numpy_theta:.2f}s)")
 
 # Set the value iteration theta to the prev value
@@ -153,4 +156,6 @@ result_orig = timeit.timeit(lambda: run_experiment_with_timing(test), number=n_e
 print(f"Done! (t={result_orig:.2f}s)")
 
 # Print the relative speedups
-print(f"Relative speedup Numpy and Theta: {result_orig/result_numpy_theta:.2f}, Just Numpy: {result_orig/result_numpy:.2f}")
+print(
+    f"Relative speedup Numpy and Theta: {result_orig/result_numpy_theta:.2f}, Just Numpy: {result_orig/result_numpy:.2f}"
+)

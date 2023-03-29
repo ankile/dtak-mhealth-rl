@@ -38,7 +38,9 @@ class MDP_2D:
         for action in self.A:
             transition_probs = np.array(self.T[action][state])
             rewards = np.array(self.R[state][action])
-            vals[action] = np.sum(transition_probs * (rewards + self.gamma * self.V.flatten()))
+            vals[action] = np.sum(
+                transition_probs * (rewards + self.gamma * self.V.flatten())
+            )
 
             # Check if action is possible
             if col == 0 and action == 0:
@@ -51,7 +53,6 @@ class MDP_2D:
                 vals[action] = np.NINF
 
         return vals
-
 
     def value_iteration(self):
         difference = np.inf

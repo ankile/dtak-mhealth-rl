@@ -78,7 +78,6 @@ def plot_strategy_heatmap(
     # invert the y-axis
     ax.invert_yaxis()
 
-
     if ax_labels:
         ax.set_xlabel("Gamma")
         ax.set_ylabel("Confidence")
