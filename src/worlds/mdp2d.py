@@ -74,8 +74,8 @@ class MDP_2D:
             self.V,
             annot=labels,
             fmt="",
-            xticklabels=False,
-            yticklabels=False,
+            xticklabels="",
+            yticklabels="",
             cbar=False,
             cbar_kws={"label": "Value"},
             annot_kws={"size": 25 / np.sqrt(len(self.V))},
@@ -329,18 +329,3 @@ class Experiment_2D:
 
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
-    def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
-        S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
-            self.action_success_prob,
-            self.rewards_dict,
-            self.gamma,
-        )
-        R[agent_R_idx - 1, 1, agent_R_idx] = agent_R_magnitude
-        R[agent_R_idx + 1, 0, agent_R_idx] = agent_R_magnitude
-
-        if ignore_default_R:
-            R[length - 2, 1, length - 1] = 0
-
-        self.mdp = MDP_2D(S, A, T, R, gamma)
