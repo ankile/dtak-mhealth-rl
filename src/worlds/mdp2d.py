@@ -16,7 +16,6 @@ class MDP_2D:
 
         self.V = np.zeros(self.S.shape)
         self.policy = np.zeros(self.S.shape)
-        # self.theta = np.nextafter(0, 1)
         self.theta = 0.0001
         self.state = self.S[0][0]
 
@@ -52,6 +51,7 @@ class MDP_2D:
                 vals[action] = np.NINF
 
         return vals
+
 
     def value_iteration(self):
         difference = np.inf
