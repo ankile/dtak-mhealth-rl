@@ -57,18 +57,22 @@ def plot_strategy_heatmap(
 ):
     ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
-    # Create a FixedLocator with a tick for every other value of gamma
-    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 2)))
+    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 1)))
     ax.set_xticklabels(
-        gammas[::2].round(5),
+        gammas.round(2),
         rotation=90,
         size=8,
     )
+    ax.yaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(probs), 1)))
     ax.set_yticklabels(probs.round(2), size=8, rotation=0)
     ax.invert_yaxis()
     if ax_labels:
         ax.set_xlabel("Gamma")
         ax.set_ylabel("Confidence")
+
+    # # Set the x and y limits to [0, 1]
+    # ax.set_xlim(0, 1)
+    # ax.set_ylim(0, 1)
 
     ax.set_title(title or "Optimal strategy (1: Right, 3: Down)")
 

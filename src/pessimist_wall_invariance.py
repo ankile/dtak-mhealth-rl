@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import numpy as np
@@ -14,6 +15,10 @@ from utils.pessimism import (
 # Naming the setup
 setup_name = "Pessimist Wall World Invariance"
 setup_name = setup_name.replace(" ", "_").lower()
+output_dir = f"images/{setup_name}"
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 # Setting the parameters
 default_config = dict(
@@ -27,13 +32,17 @@ default_config = dict(
 )
 
 # Choose the transition dynamics
-transition_mode = "full"
+transition_mode = "simple"
+
+# Set the number of subplots per row
+cols = 7  # 7 or 5
+
+# Set the number of scales and gammas to use
+granularity = 10  # 10 or 5
 
 # Set up parameters to search over
-scalers = np.arange(0.1, 10.5, 2)
-gammas = np.arange(0.4, 1, 0.05 / 2)
-
-cols = 7
+scalers = np.linspace(0.01, 8, granularity)
+gammas = np.linspace(0.4, 1, granularity)
 
 parameters = {
     "reward_mag": np.linspace(100, 500, cols),
@@ -42,6 +51,13 @@ parameters = {
     "prob": np.linspace(0.5, 0.95, cols),
     "width": [3, 4, 5, 6, 7, 8, 9],
     "height": [2, 3, 4, 5, 6, 7, 8],
+} if cols == 7 else {
+    "reward_mag": np.linspace(100, 500, cols),
+    "neg_mag": np.linspace(-20, 0, cols),
+    "latent_cost": [-3, -2, -1, 0, 1, 2, 3][1:-1],
+    "prob": np.linspace(0.5, 0.95, cols),
+    "width": [3, 4, 5, 6, 7, 8, 9][1:-1],
+    "height": [2, 3, 4, 5, 6, 7, 8][1:-1],
 }
 
 rows = len(parameters)
@@ -59,13 +75,12 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
     pbar.set_description(f"Running {param_name}")
     ax_row = axs[i]
     for j, (value, ax) in enumerate(zip(param_values, ax_row)):
-        pbar.update(1)
-        pbar.set_postfix(param_name=param_name, value=value)
+        pbar.set_postfix_str(f"{param_name}={value}")
         # Set up the experiment
         config = {**default_config, param_name: value}
         test = setup_wall_world_experiment(**config, setup_name=setup_name)
 
-        # Run the experiment
+        # Run the experiment and get the results
         results, probs = run_experiment(
             test,
             scalers,
@@ -92,6 +107,8 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
             ax.set_xlabel("Gamma")
         if j == 0:
             ax.set_ylabel("Confidence")
+        
+        pbar.update(1)
 
 # Save the figure
 setup_config_string = ",".join(f"{k}={v}" for k, v in default_config.items())
@@ -102,7 +119,6 @@ setup_config_string += f",t={transition_mode}"
 fig.suptitle(f"Pessimist Invariance ({setup_config_string})")
 plt.tight_layout()
 plt.savefig(
-    # f"images/{setup_name}/{datetime.now()}_strategy_reward{setup_config_string}.png"
-    f"images/{setup_name}/{datetime.now()}.png"
+    f"{output_dir}/{datetime.now()}.png"
 )
 plt.show()

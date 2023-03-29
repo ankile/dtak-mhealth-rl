@@ -16,7 +16,8 @@ class MDP_2D:
 
         self.V = np.zeros(self.S.shape)
         self.policy = np.zeros(self.S.shape)
-        self.theta = np.nextafter(0, 1)
+        # self.theta = np.nextafter(0, 1)
+        self.theta = 0.0001
         self.state = self.S[0][0]
 
         # sanity checks:
@@ -32,54 +33,39 @@ class MDP_2D:
         )  # state x action x next_state
 
     def bellman_eq(self, state):
+        row, col = state // self.width, state % self.width
         vals = np.zeros(len(self.A))
 
-        # TODO: Think about: IF ACTION IMPOSSIBLE, ASSIGN np.NINF value -- do this by if the sum of the self.T[action][state] = 0 then do this
         for action in self.A:
-            to_sum = []
-            for p in range(len(self.T[action][state])):
-                to_sum.append(
-                    self.T[action][state][p]
-                    * (
-                        self.R[state][action][p]
-                        + (self.gamma * self.V[p // self.width][p % self.width])
-                    )
-                )
+            transition_probs = np.array(self.T[action][state])
+            rewards = np.array(self.R[state][action])
+            vals[action] = np.sum(transition_probs * (rewards + self.gamma * self.V.flatten()))
 
-            vals[action] = sum(to_sum)
-
-        def check_action(state, width, height):
-            if state % width == 0:  # left-border
-                vals[0] = np.NINF
-            if state % width == width - 1:  # right-border
-                vals[1] = np.NINF
-            if state < width:  # top
-                vals[2] = np.NINF
-            if state >= width * (height - 1):  # bottom
-                vals[3] = np.NINF
-
-        check_action(state, self.width, self.height)
+            # Check if action is possible
+            if col == 0 and action == 0:
+                vals[action] = np.NINF
+            if col == self.width - 1 and action == 1:
+                vals[action] = np.NINF
+            if row == 0 and action == 2:
+                vals[action] = np.NINF
+            if row == self.height - 1 and action == 3:
+                vals[action] = np.NINF
 
         return vals
 
     def value_iteration(self):
-        while True:
+        difference = np.inf
+        while difference >= self.theta:
             difference = 0
-            for row in self.S:
-                for state in row:
-                    old_V = self.V[state // self.width][state % self.width]
-                    v = self.bellman_eq(state)
+            for state in self.S.flatten():
+                row, col = state // self.width, state % self.width
+                old_V = self.V[row, col]
+                v = self.bellman_eq(state)
 
-                    self.policy[state // self.width][state % self.width] = np.argmax(v)
-                    self.V[state // self.width][state % self.width] = np.max(v)
+                self.policy[row, col] = np.argmax(v)
+                self.V[row, col] = np.max(v)
 
-                    difference = max(
-                        difference,
-                        np.abs(old_V - self.V[state // self.width][state % self.width]),
-                    )
-
-            if difference < self.theta:
-                break
+                difference = np.maximum(difference, np.abs(old_V - self.V[row, col]))
 
     def save_heatmap(self, setup_name, policy_name, labels):
         # draw heatmap and save in figure

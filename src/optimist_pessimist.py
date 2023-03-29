@@ -27,7 +27,7 @@ reward_mag = 300
 latent_cost = 0
 
 # Choose the transition dynamics
-transition_mode = "full"
+transition_mode = "simple"
 
 # Set up parameters to search over
 scalers = np.arange(0.1, 5.5, 1)
