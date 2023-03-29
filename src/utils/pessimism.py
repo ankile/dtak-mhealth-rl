@@ -11,7 +11,13 @@ from worlds.mdp2d import Experiment_2D
 
 
 def run_experiment(
-    experiment: Experiment_2D, scalers, gammas, name, transition_mode, pbar: bool | tqdm = True,
+    experiment: Experiment_2D,
+    scalers,
+    gammas,
+    name,
+    transition_mode,
+    pbar: bool | tqdm = True,
+    postfix: bool = True,
 ):
     results = np.zeros((len(scalers), len(gammas)), dtype=int)
     probs = np.zeros(len(scalers), dtype=float)
@@ -24,10 +30,11 @@ def run_experiment(
     for i, scaling_pow in enumerate(scalers):
         scaling = 2**scaling_pow
         for j, gamma in enumerate(gammas):
-            pbar.set_postfix(
-                scaling=scaling,
-                gamma=gamma,
-            )
+            if postfix:
+                pbar.set_postfix(
+                    scaling=f"{scaling:<4.2f}",
+                    gamma=f"{gamma:<4.2f}",
+                )
             experiment.mdp.reset()
             experiment.pessimistic(
                 scaling=scaling, new_gamma=gamma, transition_mode=transition_mode

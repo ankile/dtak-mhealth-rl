@@ -328,4 +328,3 @@ class Experiment_2D:
             gamma = new_gamma
 
         self.mdp = MDP_2D(S, A, T, R, gamma)
-
