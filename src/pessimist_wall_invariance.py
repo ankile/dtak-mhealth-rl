@@ -15,7 +15,7 @@ from utils.pessimism import (
 # Naming the setup
 setup_name = "Pessimist Wall World Invariance"
 setup_name = setup_name.replace(" ", "_").lower()
-output_dir = f"images/{setup_name}"
+output_dir = f"local_images/{setup_name}"
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -41,7 +41,7 @@ cols = 7  # 7 or 5
 granularity = 10  # 10 or 5
 
 # Set up parameters to search over
-scalers = np.linspace(0.01, 8, granularity)
+scalers = np.linspace(-1, 8, granularity)
 gammas = np.linspace(0.4, 1, granularity)
 
 parameters = {
@@ -75,7 +75,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
     pbar.set_description(f"Running {param_name}")
     ax_row = axs[i]
     for j, (value, ax) in enumerate(zip(param_values, ax_row)):
-        pbar.set_postfix_str(f"{param_name}={value}")
+        pbar.set_postfix_str(f"{param_name}={value:.2f}")
         # Set up the experiment
         config = {**default_config, param_name: value}
         test = setup_wall_world_experiment(**config, setup_name=setup_name)

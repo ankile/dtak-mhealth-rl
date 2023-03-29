@@ -55,24 +55,33 @@ def plot_strategy_heatmap(
     annot=True,
     ax_labels=True,
 ):
+    # set the number of tick labels to display
+    num_ticks = 10
+
+    # compute the indices to use for the tick labels
+    gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
+    prob_indices = np.round(np.linspace(0, len(probs) - 1, num_ticks)).astype(int)
+
+    # create the tick labels
+    gamma_ticks = [round(gammas[i], 2) for i in gamma_indices]
+    prob_ticks = [round(probs[i], 2) for i in prob_indices]
+
+    # plot the heatmap
     ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
-    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(gammas), 1)))
-    ax.set_xticklabels(
-        gammas.round(2),
-        rotation=90,
-        size=8,
-    )
-    ax.yaxis.set_major_locator(ticker.FixedLocator(np.arange(0, len(probs), 1)))
-    ax.set_yticklabels(probs.round(2), size=8, rotation=0)
+    # set the tick labels and positions
+    ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
+    ax.set_xticklabels(gamma_ticks, rotation=90, size=8)
+    ax.yaxis.set_major_locator(ticker.FixedLocator(prob_indices))
+    ax.set_yticklabels(prob_ticks, size=8, rotation=0)
+
+    # invert the y-axis
     ax.invert_yaxis()
+
+
     if ax_labels:
         ax.set_xlabel("Gamma")
         ax.set_ylabel("Confidence")
-
-    # # Set the x and y limits to [0, 1]
-    # ax.set_xlim(0, 1)
-    # ax.set_ylim(0, 1)
 
     ax.set_title(title or "Optimal strategy (1: Right, 3: Down)")
 
