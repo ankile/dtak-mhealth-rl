@@ -41,7 +41,7 @@ def run_experiment(
             )
             experiment.mdp.solve(
                 setup_name=name,
-                policy_name=f"Pessimistic scale={scaling:.1f} gamma={gamma:.1f}",
+                policy_name=f"Pessimistic scale={scaling:.2f} gamma={gamma:.2f}",
                 save_heatmap=False,
             )
 
