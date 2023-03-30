@@ -41,7 +41,7 @@ class MDP_2D:
         # Check if transition probabilities are valid
         assert transition_matrix_is_valid(
             T
-        ), "Your matrix of transition probabilities is not valid."
+        ), "The transition probabilities are not proper."
 
         assert R.shape == (
             self.height * self.width,
@@ -192,7 +192,7 @@ class Experiment_2D:
                 fixed_rewards_dict[idx] = rewards_dict[idx]
         rewards_dict = fixed_rewards_dict
 
-        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(
+        S, A, T, R, gamma = self.make_MDP_params(
             height, width, action_success_prob, rewards_dict, gamma, transition_mode
         )
         self.rewards_dict = rewards_dict
@@ -200,7 +200,7 @@ class Experiment_2D:
         self.width = width
         self.gamma = gamma
         self.action_success_prob = action_success_prob
-        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
+        self.mdp = MDP_2D(S, A, T, R, gamma)
 
     @staticmethod
     def _get_target(i, action, width, height):
