@@ -6,10 +6,11 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from utils.pessimism import (
-    plot_strategy_heatmap,
     run_experiment,
     setup_wall_world_experiment,
 )
+
+from visualization.wall_strategy import plot_wall_strategy_heatmap
 
 
 # Naming the setup
@@ -35,10 +36,10 @@ default_config = dict(
 transition_mode = "simple"
 
 # Set the number of subplots per row
-cols = 9  # 5, 7, 9
+cols = 7  # 5, 7, 9
 
 # Set the number of scales and gammas to use
-granularity = 20  # 5, 10, 20
+granularity = 10  # 5, 10, 20
 
 # Set up parameters to search over
 scalers = np.linspace(-1, 5, granularity)
@@ -83,7 +84,7 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
         )
 
         # Create a heatmap of the resulting strategies on the second axis
-        plot_strategy_heatmap(
+        plot_wall_strategy_heatmap(
             results,
             probs,
             gammas,

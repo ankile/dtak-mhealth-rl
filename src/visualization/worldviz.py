@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 
 
-def plot_world_reward(experiment, setup_name, ax, save=False):
+def plot_world_reward(experiment, setup_name, ax, save=False, show=False):
     height, width = experiment.mdp.height, experiment.mdp.width
     wall_dict = experiment.rewards_dict
 
@@ -18,3 +18,6 @@ def plot_world_reward(experiment, setup_name, ax, save=False):
 
     if save:
         plt.savefig(f"images/{setup_name}/world.png", bbox_inches="tight")
+
+    if show:
+        plt.show()

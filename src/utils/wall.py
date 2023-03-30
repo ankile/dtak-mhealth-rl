@@ -4,7 +4,15 @@ import seaborn as sns
 import os
 
 
-def wall(height: int, width: int, wall_width: int, wall_height: int, neg_mag: float, reward_mag: float, latent_cost: float = 0,) -> dict:
+def wall(
+    height: int,
+    width: int,
+    wall_width: int,
+    wall_height: int,
+    neg_mag: float,
+    reward_mag: float,
+    latent_cost: float = 0,
+) -> dict:
     """
     Creates a wall in the middle of the gridworld.
 

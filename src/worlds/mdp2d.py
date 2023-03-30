@@ -1,6 +1,8 @@
+from datetime import datetime
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
 
 class MDP_2D:
@@ -25,6 +27,12 @@ class MDP_2D:
             self.height * self.width,
             self.height * self.width,
         )  # action x state x state
+
+        # Check if transition probabilities are valid
+        assert transition_matrix_is_valid(
+            T
+        ), "Your matrix of transition probabilities is not valid."
+
         assert R.shape == (
             self.height * self.width,
             len(self.A),
@@ -68,7 +76,7 @@ class MDP_2D:
 
                 difference = np.maximum(difference, np.abs(old_V - self.V[row, col]))
 
-    def save_heatmap(self, setup_name, policy_name, labels):
+    def save_heatmap(self, setup_name, policy_name, labels, base_dir="images"):
         # draw heatmap and save in figure
         hmap = sns.heatmap(
             self.V,
@@ -85,7 +93,7 @@ class MDP_2D:
         file_name = policy_name.replace(" ", "_").lower()
         setup_name = setup_name.replace(" ", "_").lower()
         print(file_name)
-        plt.savefig(f"images/{setup_name}/{file_name}.png")
+        plt.savefig(f"{base_dir}/{setup_name}/{file_name}_{datetime.now()}.png")
         plt.clf()
 
     def solve(
@@ -93,6 +101,7 @@ class MDP_2D:
         setup_name="Placeholder Setup Name",
         policy_name="Placeholder Policy Name",
         save_heatmap=True,
+        base_dir="images",
     ):
         self.value_iteration()
 
@@ -147,7 +156,7 @@ class MDP_2D:
             labels = np.array(grid)
 
             if save_heatmap:
-                self.save_heatmap(setup_name, policy_name, labels)
+                self.save_heatmap(setup_name, policy_name, labels, base_dir=base_dir)
 
         return self.V, self.policy
 
@@ -163,6 +172,7 @@ class Experiment_2D:
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
+        transition_mode="simple",
     ):
         fixed_rewards_dict = {}
         for idx in rewards_dict:
@@ -173,7 +183,7 @@ class Experiment_2D:
         rewards_dict = fixed_rewards_dict
 
         self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(
-            height, width, action_success_prob, rewards_dict, gamma
+            height, width, action_success_prob, rewards_dict, gamma, transition_mode
         )
         self.rewards_dict = rewards_dict
         self.height = height
@@ -215,17 +225,18 @@ class Experiment_2D:
 
             row, col = i // width, i % width
 
-            # Update transition probabilities
+            # Update transition probability for intended action
+            # Target could end up in same state if action would take agent out of bounds
             T[action, i, target] = action_success_prob
 
             # Calculate remaining probability
             remaining_prob = (1 - action_success_prob) / 4
 
+            # Update transition probabilities for neighbors
             for d in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
                 dr, dc = d
                 r, c = row + dr, col + dc
-                if in_bounds(r, c):
-                    neighbor = r * width + c
+                if in_bounds(r, c) and (neighbor := r * width + c) != target:
                     T[action, i, neighbor] = remaining_prob
                 else:
                     T[action, i, i] += remaining_prob
@@ -244,8 +255,8 @@ class Experiment_2D:
                 target = Experiment_2D._get_target(i, action, width, height)
                 set_fun(i, action, target)
 
+    @staticmethod
     def make_MDP_params(
-        self,
         height,
         width,
         action_success_prob,
@@ -258,19 +269,14 @@ class Experiment_2D:
 
         T = np.zeros((A.shape[0], height * width, height * width))
 
-        self._fill_transition_matrix(
+        Experiment_2D._fill_transition_matrix(
             T, A, width, height, action_success_prob, mode=transition_mode
         )
-
-        def make_absorbing(idx):
-            for i in range(4):
-                for j in range(width * height):
-                    T[i, idx, j] = int(idx == j)
 
         # make reward states absorbing
         for idx in rewards_dict:
             if rewards_dict[idx] > 0:
-                make_absorbing(idx)
+                make_absorbing(T, idx)
 
         # previous state, action, new state
         R = np.zeros((width * height, 4, width * height))
@@ -295,7 +301,7 @@ class Experiment_2D:
         return S, A, T, R, gamma
 
     def myopic(self, gamma):
-        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, gamma)
+        self.mdp.gamma = gamma
 
     def confident(self, action_success_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
@@ -309,12 +315,13 @@ class Experiment_2D:
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def pessimistic(self, scaling, new_gamma=None, transition_mode="simple"):
+        mdp = self.mdp
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
+            mdp.height,
+            mdp.width,
             self.action_success_prob,
             self.rewards_dict,
-            self.gamma,
+            mdp.gamma,
             transition_mode=transition_mode,
         )
 
