@@ -5,8 +5,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from utils.pessimism import (run_experiment,
-                             setup_wall_world_experiment)
+from utils.pessimism import run_experiment, setup_wall_world_experiment
 from visualization.wall_strategy import plot_wall_strategy_heatmap
 from visualization.worldviz import plot_world_reward
 
