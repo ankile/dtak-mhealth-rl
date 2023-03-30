@@ -5,13 +5,10 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from utils.pessimism import (
-    plot_strategy_heatmap,
-    plot_world_reward,
-    run_experiment,
-    setup_wall_world_experiment,
-)
-
+from utils.pessimism import (run_experiment,
+                             setup_wall_world_experiment)
+from visualization.wall_strategy import plot_wall_strategy_heatmap
+from visualization.worldviz import plot_world_reward
 
 # Naming the setup
 setup_name = "Optimist Pessimist"
@@ -57,7 +54,7 @@ results, probs = run_experiment(
 )
 
 # Create a heatmap of the resulting strategies on the second axis
-plot_strategy_heatmap(results, probs, gammas, ax=ax2)
+plot_wall_strategy_heatmap(results, probs, gammas, ax=ax2)
 
 # Save the figure
 setup_config_string = (
