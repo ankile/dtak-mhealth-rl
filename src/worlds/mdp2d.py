@@ -4,6 +4,16 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
+from collections import defaultdict
+
+# d = defaultdict(list)
+
+# for key in l:
+#     if key not in d:
+#         d[key] = []
+#     d[key].append(value)
+
+
 
 class MDP_2D:
     def __init__(self, S, A, T, R, gamma):
