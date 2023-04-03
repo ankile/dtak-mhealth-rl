@@ -84,7 +84,3 @@ if __name__ == "__main__":
         save_heatmap=True,
         base_dir="local_images",
     )
-
-    # up = experiment.mdp.T[2].reshape((height, width, height, width))
-
-    # print(up)
