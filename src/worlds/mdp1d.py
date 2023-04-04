@@ -214,8 +214,7 @@ if __name__ == "__main__":
     sns.set()
 
     # our baseline:
-    # test = Experiment_1D(length, default_prob)
-    test = Experiment_2D(4, 4)
+    test = Experiment_1D(length, default_prob)
     test.mdp.solve("Baseline World")
     neg_idx = 8
     neg_magnitude = -10

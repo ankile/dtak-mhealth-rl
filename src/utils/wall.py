@@ -4,7 +4,21 @@ import seaborn as sns
 import os
 
 
-def wall(height, width, wall_width, wall_height, neg_mag, reward_mag, latent_cost=0):
+def wall(
+    height: int,
+    width: int,
+    wall_width: int,
+    wall_height: int,
+    neg_mag: float,
+    reward_mag: float,
+    latent_cost: float = 0,
+) -> dict:
+    """
+    Creates a wall in the middle of the gridworld.
+
+    returns a dictionary of rewards for each state in the gridworld.
+    """
+
     reward_dict = {}
     for i in range(height * width):
         reward_dict[i] = latent_cost  # add latent cost

@@ -1,6 +1,10 @@
-from worlds.mdp1d import *
 import os
+
+import numpy as np
+import seaborn as sns
+
 from utils.wall import wall
+from worlds.mdp2d import Experiment_2D
 
 default_prob = 0.8
 sns.set()

@@ -1,6 +1,18 @@
+from datetime import datetime
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
+
+from collections import defaultdict
+
+# d = defaultdict(list)
+
+# for key in l:
+#     if key not in d:
+#         d[key] = []
+#     d[key].append(value)
+
 
 
 class MDP_2D:
@@ -16,7 +28,7 @@ class MDP_2D:
 
         self.V = np.zeros(self.S.shape)
         self.policy = np.zeros(self.S.shape)
-        self.theta = np.nextafter(0, 1)
+        self.theta = 0.0001
         self.state = self.S[0][0]
 
         # sanity checks:
@@ -25,6 +37,12 @@ class MDP_2D:
             self.height * self.width,
             self.height * self.width,
         )  # action x state x state
+
+        # Check if transition probabilities are valid
+        assert transition_matrix_is_valid(
+            T
+        ), "The transition probabilities are not proper."
+
         assert R.shape == (
             self.height * self.width,
             len(self.A),
@@ -32,63 +50,50 @@ class MDP_2D:
         )  # state x action x next_state
 
     def bellman_eq(self, state):
+        row, col = state // self.width, state % self.width
         vals = np.zeros(len(self.A))
 
-        # TODO: Think about: IF ACTION IMPOSSIBLE, ASSIGN np.NINF value -- do this by if the sum of the self.T[action][state] = 0 then do this
         for action in self.A:
-            to_sum = []
-            for p in range(len(self.T[action][state])):
-                to_sum.append(
-                    self.T[action][state][p]
-                    * (
-                        self.R[state][action][p]
-                        + (self.gamma * self.V[p // self.width][p % self.width])
-                    )
-                )
+            transition_probs = np.array(self.T[action][state])
+            rewards = np.array(self.R[state][action])
+            vals[action] = np.sum(
+                transition_probs * (rewards + self.gamma * self.V.flatten())
+            )
 
-            vals[action] = sum(to_sum)
-
-        def check_action(state, width, height):
-            if state % width == 0:  # left-border
-                vals[0] = np.NINF
-            if state % width == width - 1:  # right-border
-                vals[1] = np.NINF
-            if state < width:  # top
-                vals[2] = np.NINF
-            if state >= width * (height - 1):  # bottom
-                vals[3] = np.NINF
-
-        check_action(state, self.width, self.height)
+            # Check if action is possible
+            if col == 0 and action == 0:
+                vals[action] = np.NINF
+            if col == self.width - 1 and action == 1:
+                vals[action] = np.NINF
+            if row == 0 and action == 2:
+                vals[action] = np.NINF
+            if row == self.height - 1 and action == 3:
+                vals[action] = np.NINF
 
         return vals
 
     def value_iteration(self):
-        while True:
+        difference = np.inf
+        while difference >= self.theta:
             difference = 0
-            for row in self.S:
-                for state in row:
-                    old_V = self.V[state // self.width][state % self.width]
-                    v = self.bellman_eq(state)
+            for state in self.S.flatten():
+                row, col = state // self.width, state % self.width
+                old_V = self.V[row, col]
+                v = self.bellman_eq(state)
 
-                    self.policy[state // self.width][state % self.width] = np.argmax(v)
-                    self.V[state // self.width][state % self.width] = np.max(v)
+                self.policy[row, col] = np.argmax(v)
+                self.V[row, col] = np.max(v)
 
-                    difference = max(
-                        difference,
-                        np.abs(old_V - self.V[state // self.width][state % self.width]),
-                    )
+                difference = np.maximum(difference, np.abs(old_V - self.V[row, col]))
 
-            if difference < self.theta:
-                break
-
-    def save_heatmap(self, setup_name, policy_name, labels):
+    def save_heatmap(self, setup_name, policy_name, labels, base_dir="images"):
         # draw heatmap and save in figure
         hmap = sns.heatmap(
             self.V,
             annot=labels,
             fmt="",
-            xticklabels=False,
-            yticklabels=False,
+            xticklabels="",
+            yticklabels="",
             cbar=False,
             cbar_kws={"label": "Value"},
             annot_kws={"size": 25 / np.sqrt(len(self.V))},
@@ -98,7 +103,7 @@ class MDP_2D:
         file_name = policy_name.replace(" ", "_").lower()
         setup_name = setup_name.replace(" ", "_").lower()
         print(file_name)
-        plt.savefig(f"images/{setup_name}/{file_name}.png")
+        plt.savefig(f"{base_dir}/{setup_name}/{file_name}_{datetime.now()}.png")
         plt.clf()
 
     def solve(
@@ -106,6 +111,7 @@ class MDP_2D:
         setup_name="Placeholder Setup Name",
         policy_name="Placeholder Policy Name",
         save_heatmap=True,
+        base_dir="images",
     ):
         self.value_iteration()
 
@@ -160,7 +166,7 @@ class MDP_2D:
             labels = np.array(grid)
 
             if save_heatmap:
-                self.save_heatmap(setup_name, policy_name, labels)
+                self.save_heatmap(setup_name, policy_name, labels, base_dir=base_dir)
 
         return self.V, self.policy
 
@@ -176,6 +182,7 @@ class Experiment_2D:
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
+        transition_mode="simple",
     ):
         fixed_rewards_dict = {}
         for idx in rewards_dict:
@@ -185,15 +192,15 @@ class Experiment_2D:
                 fixed_rewards_dict[idx] = rewards_dict[idx]
         rewards_dict = fixed_rewards_dict
 
-        self.S, self.A, self.T, self.R, self.gamma = self.make_MDP_params(
-            height, width, action_success_prob, rewards_dict, gamma
+        S, A, T, R, gamma = self.make_MDP_params(
+            height, width, action_success_prob, rewards_dict, gamma, transition_mode
         )
         self.rewards_dict = rewards_dict
         self.height = height
         self.width = width
         self.gamma = gamma
         self.action_success_prob = action_success_prob
-        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, self.gamma)
+        self.mdp = MDP_2D(S, A, T, R, gamma)
 
     @staticmethod
     def _get_target(i, action, width, height):
@@ -228,17 +235,18 @@ class Experiment_2D:
 
             row, col = i // width, i % width
 
-            # Update transition probabilities
+            # Update transition probability for intended action
+            # Target could end up in same state if action would take agent out of bounds
             T[action, i, target] = action_success_prob
 
             # Calculate remaining probability
             remaining_prob = (1 - action_success_prob) / 4
 
+            # Update transition probabilities for neighbors
             for d in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
                 dr, dc = d
                 r, c = row + dr, col + dc
-                if in_bounds(r, c):
-                    neighbor = r * width + c
+                if in_bounds(r, c) and (neighbor := r * width + c) != target:
                     T[action, i, neighbor] = remaining_prob
                 else:
                     T[action, i, i] += remaining_prob
@@ -257,8 +265,8 @@ class Experiment_2D:
                 target = Experiment_2D._get_target(i, action, width, height)
                 set_fun(i, action, target)
 
+    @staticmethod
     def make_MDP_params(
-        self,
         height,
         width,
         action_success_prob,
@@ -271,19 +279,14 @@ class Experiment_2D:
 
         T = np.zeros((A.shape[0], height * width, height * width))
 
-        self._fill_transition_matrix(
+        Experiment_2D._fill_transition_matrix(
             T, A, width, height, action_success_prob, mode=transition_mode
         )
-
-        def make_absorbing(idx):
-            for i in range(4):
-                for j in range(width * height):
-                    T[i, idx, j] = int(idx == j)
 
         # make reward states absorbing
         for idx in rewards_dict:
             if rewards_dict[idx] > 0:
-                make_absorbing(idx)
+                make_absorbing(T, idx)
 
         # previous state, action, new state
         R = np.zeros((width * height, 4, width * height))
@@ -308,7 +311,7 @@ class Experiment_2D:
         return S, A, T, R, gamma
 
     def myopic(self, gamma):
-        self.mdp = MDP_2D(self.S, self.A, self.T, self.R, gamma)
+        self.mdp.gamma = gamma
 
     def confident(self, action_success_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
@@ -322,12 +325,13 @@ class Experiment_2D:
         self.mdp = MDP_2D(S, A, T, R, gamma)
 
     def pessimistic(self, scaling, new_gamma=None, transition_mode="simple"):
+        mdp = self.mdp
         S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
+            mdp.height,
+            mdp.width,
             self.action_success_prob,
             self.rewards_dict,
-            self.gamma,
+            mdp.gamma,
             transition_mode=transition_mode,
         )
 
@@ -339,21 +343,5 @@ class Experiment_2D:
 
         if new_gamma is not None:
             gamma = new_gamma
-
-        self.mdp = MDP_2D(S, A, T, R, gamma)
-
-    def reward(self, agent_R_idx, agent_R_magnitude, ignore_default_R):
-        S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
-            self.action_success_prob,
-            self.rewards_dict,
-            self.gamma,
-        )
-        R[agent_R_idx - 1, 1, agent_R_idx] = agent_R_magnitude
-        R[agent_R_idx + 1, 0, agent_R_idx] = agent_R_magnitude
-
-        if ignore_default_R:
-            R[length - 2, 1, length - 1] = 0
 
         self.mdp = MDP_2D(S, A, T, R, gamma)
