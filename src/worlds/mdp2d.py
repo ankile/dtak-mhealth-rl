@@ -4,16 +4,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
-from collections import defaultdict
-
-# d = defaultdict(list)
-
-# for key in l:
-#     if key not in d:
-#         d[key] = []
-#     d[key].append(value)
-
-
 
 class MDP_2D:
     def __init__(self, S, A, T, R, gamma):
@@ -86,7 +76,17 @@ class MDP_2D:
 
                 difference = np.maximum(difference, np.abs(old_V - self.V[row, col]))
 
-    def save_heatmap(self, setup_name, policy_name, labels, base_dir="images"):
+    def make_heatmap(
+        self,
+        setup_name,
+        policy_name,
+        labels,
+        base_dir="images",
+        save=True,
+        show=False,
+        ax=None,
+        mask=None,
+    ):
         # draw heatmap and save in figure
         hmap = sns.heatmap(
             self.V,
@@ -97,76 +97,62 @@ class MDP_2D:
             cbar=False,
             cbar_kws={"label": "Value"},
             annot_kws={"size": 25 / np.sqrt(len(self.V))},
+            ax=ax,
+            mask=mask,
         )
-        hmap.set(xlabel="States", title=f"{policy_name} Value Iteration")
+        hmap.set(title=f"{policy_name} Value Iteration")
         hmap = hmap.figure
         file_name = policy_name.replace(" ", "_").lower()
         setup_name = setup_name.replace(" ", "_").lower()
-        print(file_name)
-        plt.savefig(f"{base_dir}/{setup_name}/{file_name}_{datetime.now()}.png")
-        plt.clf()
+
+        if save:
+            filepath = f"{base_dir}/{setup_name}/{file_name}_{datetime.now()}.png"
+            print(f"Saving heatmap for {policy_name} in {filepath}")
+            plt.savefig(filepath)
+
+        if show:
+            plt.show()
 
     def solve(
         self,
         setup_name="Placeholder Setup Name",
         policy_name="Placeholder Policy Name",
         save_heatmap=True,
+        show_heatmap=False,
+        heatmap_ax=None,
+        heatmap_mask=None,
         base_dir="images",
+        label_precision=3,
     ):
         self.value_iteration()
+        precision = label_precision
+
+        arrows = ["\u2190", "\u2192", "\u2191", "\u2193"]
 
         if len(self.policy) > 0:
             grid = []
-            precision = 3
             for row in self.S:
                 grid_row = []
                 for state in row:
-                    if self.policy[state // self.width][state % self.width] == 0:
-                        grid_row.append(
-                            "\u2190 \n "
-                            + str(
-                                round(
-                                    self.V[state // self.width][state % self.width],
-                                    precision,
-                                )
-                            )
-                        )
-                    elif self.policy[state // self.width][state % self.width] == 1:
-                        grid_row.append(
-                            "\u2192 \n "
-                            + str(
-                                round(
-                                    self.V[state // self.width][state % self.width],
-                                    precision,
-                                )
-                            )
-                        )
-                    elif self.policy[state // self.width][state % self.width] == 2:
-                        grid_row.append(
-                            "\u2191 \n "
-                            + str(
-                                round(
-                                    self.V[state // self.width][state % self.width],
-                                    precision,
-                                )
-                            )
-                        )
-                    else:
-                        grid_row.append(
-                            "\u2193 \n "
-                            + str(
-                                round(
-                                    self.V[state // self.width][state % self.width],
-                                    precision,
-                                )
-                            )
-                        )
+                    row, col = state // self.width, state % self.width
+                    policy = self.policy[row][col].astype(int)
+                    value = self.V[row][col]
+                    grid_row.append(f"{arrows[policy]}\n{value:.{precision}f}")
                 grid.append(grid_row)
 
             labels = np.array(grid)
 
-            if save_heatmap:
-                self.save_heatmap(setup_name, policy_name, labels, base_dir=base_dir)
+            if save_heatmap or show_heatmap or heatmap_ax:
+                self.make_heatmap(
+                    setup_name,
+                    policy_name,
+                    labels,
+                    base_dir=base_dir,
+                    save=save_heatmap,
+                    show=show_heatmap,
+                    ax=heatmap_ax,
+                    mask=heatmap_mask,
+                )
 
         return self.V, self.policy
 
@@ -274,7 +260,7 @@ class Experiment_2D:
         gamma,
         transition_mode="simple",
     ):
-        S = np.arange(height * width).reshape(height, -1)
+        S = np.arange(height * width).reshape(height, width)
         A = np.array((0, 1, 2, 3))  # 0 is left, 1 is right, 2 is up, 3 is down
 
         T = np.zeros((A.shape[0], height * width, height * width))
