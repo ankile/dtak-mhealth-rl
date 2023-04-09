@@ -62,8 +62,8 @@ def cliff_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.8,
-        "gamma": 0.8,
+        "prob": 0.9,
+        "gamma": 0.90,
         "height": 4,
         "width": 8,
         "reward_mag": 1e2,
