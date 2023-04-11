@@ -2,7 +2,6 @@ import os
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
-from utils.transition_matrix import transition_matrix_is_valid
 from worlds.mdp2d import Experiment_2D
 
 # Import the cliff world
@@ -60,16 +59,51 @@ def cliff_experiment(
     return experiment
 
 
+def get_all_absorbing_states(T, height, width):
+    absorbing_states = []
+
+    for state in range(height * width):
+        for action in range(4):
+            if T[action, state, state] == 1:
+                absorbing_states.append(state)
+
+    return absorbing_states
+
+
+def follow_policy(policy, height, width, initial_state, terminal_states):
+    action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
+    state = initial_state
+    actions_taken = []
+
+    while state not in terminal_states:
+        row, col = state // width, state % width
+        action = policy[row, col]
+        actions_taken.append(action_dict[action])
+
+        if action == 0:  # left
+            col = max(0, col - 1)
+        elif action == 1:  # right
+            col = min(width - 1, col + 1)
+        elif action == 2:  # up
+            row = max(0, row - 1)
+        elif action == 3:  # down
+            row = min(height - 1, row + 1)
+
+        state = row * width + col
+
+    return "".join(actions_taken)
+
+
 if __name__ == "__main__":
     params = {
-        "prob": 0.9,
-        "gamma": 0.90,
-        "height": 4,
+        "prob": 0.72,
+        "gamma": 0.89,
+        "height": 3,
         "width": 8,
         "reward_mag": 1e2,
-        "neg_mag": -1e3,
+        "neg_mag": -1e2,
         "latent_reward": 0,
-        "disengage_reward": 1e1,
+        "disengage_reward": None,
         "allow_disengage": False,
     }
 
@@ -122,11 +156,26 @@ if __name__ == "__main__":
         policy_name="Baseline World",
         save_heatmap=False,
         show_heatmap=False,
-        heatmap_ax=ax3,
+        # TODO: Add in ax3 again
+        heatmap_ax=None,
         heatmap_mask=mask,
         base_dir="local_images",
         label_precision=1,
     )
+
+    # TODO: Debugging purposes
+    terminal = get_all_absorbing_states(
+        experiment.mdp.T, params["height"], params["width"]
+    )
+    policy_str = follow_policy(
+        experiment.mdp.policy,
+        height=params["height"],
+        width=params["width"],
+        initial_state=(params["height"] - 1) * params["width"],
+        terminal_states=terminal,
+    )
+
+    print(policy_str)
 
     # set titles for subplots
     ax1.set_title("Parameters", fontsize=16)

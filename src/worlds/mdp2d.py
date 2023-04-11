@@ -39,26 +39,26 @@ class MDP_2D:
             self.height * self.width,
         )  # state x action x next_state
 
-    def bellman_eq(self, state):
-        row, col = state // self.width, state % self.width
+    def bellman_eq(self, row, col):
+        state = row * self.width + col
         vals = np.zeros(len(self.A))
 
         for action in self.A:
             transition_probs = np.array(self.T[action][state])
+
+            # Set transition probabilities to zero for invalid actions
+            if (
+                (col == 0 and action == 0)
+                or (col == self.width - 1 and action == 1)
+                or (row == 0 and action == 2)
+                or (row == self.height - 1 and action == 3)
+            ):
+                transition_probs = np.zeros_like(transition_probs)
+
             rewards = np.array(self.R[state][action])
             vals[action] = np.sum(
                 transition_probs * (rewards + self.gamma * self.V.flatten())
             )
-
-            # Check if action is possible
-            if col == 0 and action == 0:
-                vals[action] = np.NINF
-            if col == self.width - 1 and action == 1:
-                vals[action] = np.NINF
-            if row == 0 and action == 2:
-                vals[action] = np.NINF
-            if row == self.height - 1 and action == 3:
-                vals[action] = np.NINF
 
         return vals
 
@@ -69,7 +69,7 @@ class MDP_2D:
             for state in self.S.flatten():
                 row, col = state // self.width, state % self.width
                 old_V = self.V[row, col]
-                v = self.bellman_eq(state)
+                v = self.bellman_eq(row, col)
 
                 self.policy[row, col] = np.argmax(v)
                 self.V[row, col] = np.max(v)
@@ -168,7 +168,7 @@ class Experiment_2D:
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
-        transition_mode="simple",
+        transition_mode="full",
     ):
         fixed_rewards_dict = {}
         for idx in rewards_dict:
@@ -258,7 +258,7 @@ class Experiment_2D:
         action_success_prob,
         rewards_dict,
         gamma,
-        transition_mode="simple",
+        transition_mode="full",
     ):
         S = np.arange(height * width).reshape(height, width)
         A = np.array((0, 1, 2, 3))  # 0 is left, 1 is right, 2 is up, 3 is down

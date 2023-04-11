@@ -36,33 +36,50 @@ def follow_policy(policy, height, width, initial_state, terminal_states):
 
 
 def get_all_absorbing_states(T, height, width):
-    absorbing_states = []
+    absorbing_states = set()
 
     for state in range(height * width):
         for action in range(4):
             if T[action, state, state] == 1:
-                absorbing_states.append(state)
+                absorbing_states.add(state)
+                break
 
     return absorbing_states
 
 
 if __name__ == "__main__":
-    default_params = {
-        "prob": 0.7,
-        "gamma": 0.90,
+    # default_params = {
+    #     "prob": 0.72,
+    #     "gamma": 0.89,
+    #     "height": 3,
+    #     "width": 8,
+    #     "reward_mag": 1e2,
+    #     "neg_mag": -1e2,
+    #     "latent_reward": 0,
+    #     "disengage_reward": None,
+    #     "allow_disengage": False,
+    # }
+
+    # experiment = cliff_experiment(
+    #     setup_name="Cliff",
+    #     **default_params,
+    # )
+
+    params = {
         "height": 4,
         "width": 8,
-        "reward_mag": 1e3,
-        "neg_mag": -1e4,
+        "reward_mag": 1e2,
+        "neg_mag": -1e2,
         "latent_reward": 0,
-        "disengage_reward": 1e1,
+        "disengage_reward": None,
         "allow_disengage": False,
     }
 
-    h, w = default_params["height"], default_params["width"]
+    # h, w = default_params["height"], default_params["width"]
+    h, w = params["height"], params["width"]
 
-    gammas = np.linspace(0.2, 0.999, 10)
-    probs = np.linspace(0.5, 0.99, 10)
+    gammas = np.linspace(0.5, 0.999, 30)
+    probs = np.linspace(0.5, 0.999, 30)
 
     data = np.zeros((len(probs), len(gammas)), dtype=int)
     policies = {}
@@ -72,18 +89,11 @@ if __name__ == "__main__":
     # and the two plots span two columns each
 
     # create figure with 5 columns
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(6, 4))
 
     # Adjust layout and spacing (make room for titles)
-    fig.tight_layout()
     plt.subplots_adjust(top=0.9)
 
-    experiment = cliff_experiment(
-        setup_name="Cliff",
-        **default_params,
-    )
-
-    terminal_states = get_all_absorbing_states(experiment.mdp.T, h, w)
     # Set the starting state to be the bottom left corner
     starting_state = (h - 1) * w
 
@@ -93,35 +103,34 @@ if __name__ == "__main__":
         itertools.product(range(len(probs)), range(len(gammas))),
         itertools.product(probs, gammas),
     ):
-        experiment.mdp.reset()
+        pbar.set_description(f"Prob: {prob:>3.2f}, Gamma: {gamma:>3.2f}")
 
-        S, A, T, R, gamma = experiment.make_MDP_params(
-            action_success_prob=prob,
-            transition_mode="full",
-            gamma=gamma,
-            height=h,
-            width=w,
-            rewards_dict=experiment.rewards_dict,
+        experiment = cliff_experiment(
+            setup_name="Cliff",
+            **{**params, "prob": prob, "gamma": gamma},
         )
 
-        experiment.mdp = MDP_2D(S, A, T, R, gamma)
-
-        values, policy = experiment.mdp.solve(
+        experiment.mdp.solve(
             setup_name="Cliff",
             policy_name="Baseline World",
             save_heatmap=False,
             show_heatmap=False,
+            # TODO: Add in ax3 again
             heatmap_ax=None,
             heatmap_mask=None,
             base_dir="local_images",
             label_precision=1,
         )
+
+        terminal = get_all_absorbing_states(
+            experiment.mdp.T, params["height"], params["width"]
+        )
         policy_str = follow_policy(
-            policy,
-            default_params["height"],
-            default_params["width"],
-            starting_state,
-            terminal_states,
+            experiment.mdp.policy,
+            height=params["height"],
+            width=params["width"],
+            initial_state=(params["height"] - 1) * params["width"],
+            terminal_states=terminal,
         )
 
         policies[(prob, gamma)] = policy_str
@@ -131,11 +140,13 @@ if __name__ == "__main__":
         data[i, j] = p2idx[policy_str]
         pbar.update(1)
 
-    print(p2idx)
-    print(policies)
-
-    parameter_text = ", ".join([f"{k}: {v}" for k, v in default_params.items()])
-    ax.set_title(parameter_text, fontsize=8)
+    # parameter_text = ", ".join([f"{k}: {v}" for k, v in default_params.items()])
+    parameter_text = ", ".join([f"{k}: {v}" for k, v in params.items()])
+    parameter_text = (
+        parameter_text[: len(parameter_text) // 2]
+        + "\n"
+        + parameter_text[len(parameter_text) // 2 :]
+    )
 
     # set the number of tick labels to display
     num_ticks = 10
@@ -149,7 +160,7 @@ if __name__ == "__main__":
     prob_ticks = [round(probs[i], 2) for i in prob_indices]
 
     # plot the heatmap
-    ax = sns.heatmap(data, annot=True, cmap="Blues", fmt="d", ax=ax, cbar=False)
+    ax = sns.heatmap(data, annot=False, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
     # set the tick labels and positions
     ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
@@ -162,5 +173,8 @@ if __name__ == "__main__":
 
     ax.set_xlabel("Gamma")
     ax.set_ylabel("Confidence")
+
+    fig.suptitle(parameter_text, fontsize=8)
+    plt.tight_layout()
 
     plt.show()
