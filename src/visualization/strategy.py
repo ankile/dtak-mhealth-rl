@@ -4,19 +4,49 @@ import numpy as np
 import seaborn as sns
 
 
-def plot_wall_strategy_heatmap(
+def make_cliff_strategy_heatmap(
+    results,
+    probs,
+    gammas,
+    ax,
+    p2idx,
+    title=None,
+    annot=True,
+    ax_labels=True,
+    num_ticks=10,
+) -> None:
+    make_strategy_heatmap(
+        results,
+        probs,
+        gammas,
+        ax,
+        title=title,
+        annot=annot,
+        ax_labels=ax_labels,
+        num_ticks=num_ticks,
+    )
+
+    # Obtain the colormap
+    cmap = sns.color_palette("Blues", len(p2idx))
+
+    # Create legend patches
+    legend_patches = [
+        mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()
+    ]
+
+    ax.legend(handles=legend_patches, loc="upper left", fontsize=6)
+
+
+def make_strategy_heatmap(
     results,
     probs,
     gammas,
     ax,
     title=None,
-    legend=True,
     annot=True,
     ax_labels=True,
-):
-    # set the number of tick labels to display
-    num_ticks = 10
-
+    num_ticks=10,
+) -> None:
     # compute the indices to use for the tick labels
     gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
     prob_indices = np.round(np.linspace(0, len(probs) - 1, num_ticks)).astype(int)
@@ -26,7 +56,7 @@ def plot_wall_strategy_heatmap(
     prob_ticks = [round(probs[i], 2) for i in prob_indices]
 
     # plot the heatmap
-    ax = sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
+    sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
 
     # set the tick labels and positions
     ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
@@ -41,7 +71,31 @@ def plot_wall_strategy_heatmap(
         ax.set_xlabel("Gamma")
         ax.set_ylabel("Confidence")
 
-    ax.set_title(title or "Optimal strategy (1: Right, 3: Down)")
+    if title:
+        ax.set_title(title, size=8)
+
+    return ax
+
+
+def plot_wall_strategy_heatmap(
+    results,
+    probs,
+    gammas,
+    ax,
+    title=None,
+    legend=True,
+    annot=True,
+    ax_labels=True,
+):
+    make_strategy_heatmap(
+        results=results,
+        probs=probs,
+        gammas=gammas,
+        ax=ax,
+        title=title,
+        annot=annot,
+        ax_labels=ax_labels,
+    )
 
     # Set legend to the right to explain the numbers 1 and 3 with same colors as the heatmap
     if legend:

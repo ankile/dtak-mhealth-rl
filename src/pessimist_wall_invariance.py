@@ -10,7 +10,7 @@ from utils.pessimism import (
     setup_wall_world_experiment,
 )
 
-from visualization.wall_strategy import plot_wall_strategy_heatmap
+from visualization.strategy import plot_wall_strategy_heatmap
 
 
 # Naming the setup

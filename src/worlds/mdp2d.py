@@ -168,7 +168,7 @@ class Experiment_2D:
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
-        transition_mode="full",
+        transition_mode="simple",
     ):
         fixed_rewards_dict = {}
         for idx in rewards_dict:

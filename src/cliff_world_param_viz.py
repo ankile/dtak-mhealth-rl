@@ -1,22 +1,24 @@
 import itertools
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
+
 import numpy as np
-import seaborn as sns
-import matplotlib.ticker as ticker
 from tqdm import tqdm
 
 
 # Import the cliff world
 from cliff_world import cliff_experiment
-from worlds.mdp2d import MDP_2D
+from visualization.strategy import make_cliff_strategy_heatmap
 
 
 def follow_policy(policy, height, width, initial_state, terminal_states):
     action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
     state = initial_state
     actions_taken = []
+    seen_states = set()
 
-    while state not in terminal_states:
+    while state not in terminal_states and state not in seen_states:
+        seen_states.add(state)
         row, col = state // width, state % width
         action = policy[row, col]
         actions_taken.append(action_dict[action])
@@ -47,75 +49,28 @@ def get_all_absorbing_states(T, height, width):
     return absorbing_states
 
 
-if __name__ == "__main__":
-    # default_params = {
-    #     "prob": 0.72,
-    #     "gamma": 0.89,
-    #     "height": 3,
-    #     "width": 8,
-    #     "reward_mag": 1e2,
-    #     "neg_mag": -1e2,
-    #     "latent_reward": 0,
-    #     "disengage_reward": None,
-    #     "allow_disengage": False,
-    # }
-
-    # experiment = cliff_experiment(
-    #     setup_name="Cliff",
-    #     **default_params,
-    # )
-
-    params = {
-        "height": 4,
-        "width": 8,
-        "reward_mag": 1e2,
-        "neg_mag": -1e2,
-        "latent_reward": 0,
-        "disengage_reward": None,
-        "allow_disengage": False,
-    }
-
-    # h, w = default_params["height"], default_params["width"]
-    h, w = params["height"], params["width"]
-
-    gammas = np.linspace(0.5, 0.999, 30)
-    probs = np.linspace(0.5, 0.999, 30)
-
+def run_cliff_experiment(
+    params,
+    gammas,
+    probs,
+):
     data = np.zeros((len(probs), len(gammas)), dtype=int)
     policies = {}
     p2idx = {}
 
-    # Make plot with 5 columns where the first column is the parameters
-    # and the two plots span two columns each
-
-    # create figure with 5 columns
-    fig, ax = plt.subplots(figsize=(6, 4))
-
-    # Adjust layout and spacing (make room for titles)
-    plt.subplots_adjust(top=0.9)
-
-    # Set the starting state to be the bottom left corner
-    starting_state = (h - 1) * w
-
-    pbar = tqdm(total=len(probs) * len(gammas))
-
-    for (i, j), (prob, gamma) in zip(
-        itertools.product(range(len(probs)), range(len(gammas))),
-        itertools.product(probs, gammas),
-    ):
-        pbar.set_description(f"Prob: {prob:>3.2f}, Gamma: {gamma:>3.2f}")
-
+    for (i, prob), (j, gamma) in itertools.product(enumerate(probs), enumerate(gammas)):
         experiment = cliff_experiment(
             setup_name="Cliff",
-            **{**params, "prob": prob, "gamma": gamma},
+            **params,
+            prob=prob,
+            gamma=gamma,
         )
 
         experiment.mdp.solve(
             setup_name="Cliff",
-            policy_name="Baseline World",
+            policy_name="Cliff Policy",
             save_heatmap=False,
             show_heatmap=False,
-            # TODO: Add in ax3 again
             heatmap_ax=None,
             heatmap_mask=None,
             base_dir="local_images",
@@ -138,43 +93,84 @@ if __name__ == "__main__":
             p2idx[policy_str] = len(p2idx)
 
         data[i, j] = p2idx[policy_str]
+
+    return data, p2idx
+
+
+def param_generator(parameters, axs):
+    axs = axs.reshape(-1, axs.shape[-1])
+    for i, (param_name, param_values) in enumerate(parameters.items()):
+        ax_row = axs[i]
+        for value, ax in zip(param_values, ax_row):
+            yield param_name, value, ax
+
+
+if __name__ == "__main__":
+    default_params = {
+        "height": 4,
+        "width": 8,
+        "reward_mag": 1e2,
+        "neg_mag": -1e2,
+        "latent_reward": 0,
+        "disengage_reward": None,
+        "allow_disengage": False,
+    }
+
+    # Set the number of subplots per row
+    cols = 9  # 5, 7, 9
+
+    # Set the number of scales and gammas to use
+    granularity = 10  # 5, 10, 20
+
+    # Set up parameters to search over
+    probs = np.linspace(0.3, 0.99, granularity)
+    gammas = np.linspace(0.4, 0.99, granularity)
+
+    parameters = {
+        "reward_mag": np.linspace(100, 500, cols),
+        "neg_mag": np.linspace(-20, 0, cols),
+        "latent_reward": np.linspace(-3, 0, cols),
+        "prob": np.linspace(0.5, 0.95, cols),
+        "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
+        "height": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
+    }
+
+    rows = len(parameters)
+
+    # Create the figure and axes to plot on
+    fig, axs = plt.subplots(
+        nrows=rows, ncols=cols, figsize=(16, 9), sharex=True, sharey=True
+    )
+    fig.subplots_adjust(top=0.9)
+
+    pbar = tqdm(total=rows * cols)
+    for param, value, ax in param_generator(parameters, axs):
+        pbar.set_description(f"Running {param}={value:.2f}")
+        config = {**default_params, param: value}
+        data, p2idx = run_cliff_experiment(
+            config,
+            gammas,
+            probs,
+        )
+
+        make_cliff_strategy_heatmap(
+            data,
+            gammas,
+            probs,
+            ax=ax,
+            p2idx=p2idx,
+            title=f"{param}={value:.2f}",
+            annot=False,
+            ax_labels=False,
+            num_ticks=10,
+        )
+
         pbar.update(1)
 
-    # parameter_text = ", ".join([f"{k}: {v}" for k, v in default_params.items()])
-    parameter_text = ", ".join([f"{k}: {v}" for k, v in params.items()])
-    parameter_text = (
-        parameter_text[: len(parameter_text) // 2]
-        + "\n"
-        + parameter_text[len(parameter_text) // 2 :]
+    # Shoow the full plot at the end
+    fig.suptitle(
+        "Cliff World Parameter Search:\n"
+        + ", ".join(f"{k}={v}" for k, v in default_params.items())
     )
-
-    # set the number of tick labels to display
-    num_ticks = 10
-
-    # compute the indices to use for the tick labels
-    gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
-    prob_indices = np.round(np.linspace(0, len(probs) - 1, num_ticks)).astype(int)
-
-    # create the tick labels
-    gamma_ticks = [round(gammas[i], 2) for i in gamma_indices]
-    prob_ticks = [round(probs[i], 2) for i in prob_indices]
-
-    # plot the heatmap
-    ax = sns.heatmap(data, annot=False, cmap="Blues", fmt="d", ax=ax, cbar=False)
-
-    # set the tick labels and positions
-    ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
-    ax.set_xticklabels(gamma_ticks, rotation=90, size=8)
-    ax.yaxis.set_major_locator(ticker.FixedLocator(prob_indices))
-    ax.set_yticklabels(prob_ticks, size=8, rotation=0)
-
-    # invert the y-axis
-    ax.invert_yaxis()
-
-    ax.set_xlabel("Gamma")
-    ax.set_ylabel("Confidence")
-
-    fig.suptitle(parameter_text, fontsize=8)
     plt.tight_layout()
-
     plt.show()

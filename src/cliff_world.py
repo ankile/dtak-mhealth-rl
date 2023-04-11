@@ -102,7 +102,7 @@ if __name__ == "__main__":
         "width": 8,
         "reward_mag": 1e2,
         "neg_mag": -1e2,
-        "latent_reward": 0,
+        "latent_reward": -1,
         "disengage_reward": None,
         "allow_disengage": False,
     }
@@ -156,8 +156,7 @@ if __name__ == "__main__":
         policy_name="Baseline World",
         save_heatmap=False,
         show_heatmap=False,
-        # TODO: Add in ax3 again
-        heatmap_ax=None,
+        heatmap_ax=ax3,
         heatmap_mask=mask,
         base_dir="local_images",
         label_precision=1,
