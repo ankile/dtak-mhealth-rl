@@ -16,6 +16,7 @@ def cliff_experiment(
     prob,
     gamma,
     reward_mag,
+    small_r_mag,
     neg_mag=-np.inf,
     latent_reward=0,
     disengage_reward=0,
@@ -37,6 +38,9 @@ def cliff_experiment(
         disengage_reward=disengage_reward,
         allow_disengage=allow_disengage,
     )
+    
+    # Adding the smaller reward
+    cliff_dict[width-1] = small_r_mag
 
     experiment = Experiment_2D(
         height,
@@ -101,6 +105,7 @@ if __name__ == "__main__":
         "height": 3,
         "width": 8,
         "reward_mag": 1e2,
+        "small_r_mag": 0, #small_mag of 0 = normal cliff world
         "neg_mag": -1e2,
         "latent_reward": -1,
         "disengage_reward": None,

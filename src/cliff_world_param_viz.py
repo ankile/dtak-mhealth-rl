@@ -110,6 +110,7 @@ if __name__ == "__main__":
         "height": 4,
         "width": 8,
         "reward_mag": 1e2,
+        "small_r_mag": 0,
         "neg_mag": -1e2,
         "latent_reward": 0,
         "disengage_reward": None,
@@ -128,6 +129,7 @@ if __name__ == "__main__":
 
     parameters = {
         "reward_mag": np.linspace(100, 500, cols),
+        "small_r_mag": np.linspace(50, 250, cols), # ratio of two throughout
         "neg_mag": np.linspace(-20, 0, cols),
         "latent_reward": np.linspace(-3, 0, cols),
         "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
