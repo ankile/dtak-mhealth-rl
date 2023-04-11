@@ -130,9 +130,9 @@ if __name__ == "__main__":
         "reward_mag": np.linspace(100, 500, cols),
         "neg_mag": np.linspace(-20, 0, cols),
         "latent_reward": np.linspace(-3, 0, cols),
-        "prob": np.linspace(0.5, 0.95, cols),
         "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
         "height": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
+        # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
     }
 
     rows = len(parameters)
