@@ -1,4 +1,6 @@
+from datetime import datetime
 import itertools
+import os
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
 
@@ -106,34 +108,43 @@ def param_generator(parameters, axs):
 
 
 if __name__ == "__main__":
+    # Naming the setup
+    setup_name = "Cliff World Param Viz"
+    setup_name = setup_name.replace(" ", "_").lower()
+    output_dir = f"local_images/{setup_name}"
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     default_params = {
         "height": 4,
         "width": 8,
         "reward_mag": 1e2,
         "small_r_mag": 0,
-        "neg_mag": -1e2,
+        "neg_mag": -1e8,
         "latent_reward": 0,
-        "disengage_reward": None,
-        "allow_disengage": False,
+        "disengage_reward": 1,
+        "allow_disengage": True,
     }
 
     # Set the number of subplots per row
-    cols = 9  # 5, 7, 9
+    cols = 5  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 10  # 5, 10, 20
+    granularity = 5  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.3, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     parameters = {
-        "reward_mag": np.linspace(100, 500, cols),
-        "small_r_mag": np.linspace(50, 250, cols), # ratio of two throughout
-        "neg_mag": np.linspace(-20, 0, cols),
+        # "reward_mag": np.linspace(100, 500, cols),
+        "small_r_mag": np.linspace(25, 100, cols),
+        # "neg_mag": np.linspace(-20, 0, cols),
         "latent_reward": np.linspace(-3, 0, cols),
-        "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
-        "height": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
+        "width": np.arange(6 - int(cols / 2), 6 + int(cols / 2) + 1) + 1,
+        "height": np.arange(6 - int(cols / 2), 6 + int(cols / 2) + 1),
+        "disengage_reward": np.linspace(0, 10, cols),
         # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
     }
 
@@ -175,4 +186,14 @@ if __name__ == "__main__":
         + ", ".join(f"{k}={v}" for k, v in default_params.items())
     )
     plt.tight_layout()
+
+    # Set the x and y labels
+    for ax in axs[-1]:
+        ax.set_xlabel("Gamma")
+    for ax in axs[:, 0]:
+        ax.set_ylabel("Prob")
+
+    # Save the figure
+    fig.savefig(f"{output_dir}/cliff_param_search_{datetime.now()}.png", dpi=300)
+
     plt.show()

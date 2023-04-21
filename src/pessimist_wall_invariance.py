@@ -1,3 +1,4 @@
+from functools import partial
 import os
 from datetime import datetime
 
@@ -6,7 +7,8 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from utils.pessimism import (
-    run_experiment,
+    run_underconfident,
+    run_pessimism,
     setup_wall_world_experiment,
 )
 
@@ -36,20 +38,22 @@ default_config = dict(
 transition_mode = "simple"
 
 # Set the number of subplots per row
-cols = 7  # 5, 7, 9
+cols = 5  # 5, 7, 9
 
 # Set the number of scales and gammas to use
-granularity = 10  # 5, 10, 20
+granularity = 20  # 5, 10, 20
 
 # Set up parameters to search over
-scalers = np.linspace(-1, 5, granularity)
+scalers, probs = None, None
+scalers = 2 ** np.linspace(-1, 5, granularity)
+# probs = np.linspace(0.4, 0.99, granularity)
 gammas = np.linspace(0.4, 0.99, granularity)
 
 parameters = {
     "reward_mag": np.linspace(100, 500, cols),
     "neg_mag": np.linspace(-20, 0, cols),
     "latent_cost": list(range(-int(cols / 2), int(cols / 2) + 1)),
-    "prob": np.linspace(0.5, 0.95, cols),
+    # "prob": np.linspace(0.5, 0.95, cols),
     "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
     "height": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
 }
@@ -58,12 +62,23 @@ rows = len(parameters)
 
 # Create the figure and axes to plot on
 fig, axs = plt.subplots(
-    nrows=rows, ncols=cols, figsize=(16, 10), sharex=True, sharey=True
+    nrows=rows, ncols=cols, figsize=(14, 8), sharex=True, sharey=True
 )
 
 fig.subplots_adjust(top=0.9)
 
 pbar = tqdm(total=rows * cols * granularity**2)
+
+# Run the pessimism experiment if "scalers" variable is defined
+if scalers is not None:
+    run_experiment = partial(
+        run_pessimism, scalers=scalers, transition_mode=transition_mode
+    )
+# Run the underconfident experiment if "probs" variable is defined
+elif probs is not None:
+    run_experiment = partial(run_underconfident, probs=probs)
+else:
+    raise ValueError("Must define either 'scalers' or 'probs'")
 
 for i, (param_name, param_values) in enumerate(parameters.items()):
     ax_row = axs[i]
@@ -75,11 +90,9 @@ for i, (param_name, param_values) in enumerate(parameters.items()):
 
         # Run the experiment and get the results
         results, probs = run_experiment(
-            test,
-            scalers,
-            gammas,
+            experiment=test,
+            gammas=gammas,
             name=setup_name,
-            transition_mode=transition_mode,
             pbar=pbar,
         )
 

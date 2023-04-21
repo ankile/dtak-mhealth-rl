@@ -9,7 +9,7 @@ from utils.wall import wall
 from worlds.mdp2d import Experiment_2D
 
 
-def run_experiment(
+def run_pessimism(
     experiment: Experiment_2D,
     scalers,
     gammas,
@@ -26,15 +26,13 @@ def run_experiment(
         pbar = tqdm(total=len(scalers) * len(gammas), disable=not pbar)
 
     # Run the experiment
-    for i, scaling_pow in enumerate(scalers):
-        scaling = 2**scaling_pow
+    for i, scaling in enumerate(scalers):
         for j, gamma in enumerate(gammas):
             if postfix:
                 pbar.set_postfix(
                     scaling=f"{scaling:<4.2f}",
                     gamma=f"{gamma:<4.2f}",
                 )
-            experiment.mdp.reset()
             experiment.pessimistic(
                 scaling=scaling, new_gamma=gamma, transition_mode=transition_mode
             )
@@ -47,6 +45,41 @@ def run_experiment(
             results[i, j] = experiment.mdp.policy[0, 0]
             width = experiment.mdp.width
             probs[i] = experiment.mdp.T[1, width - 2, width - 1]
+            pbar.update(1)
+
+    return results, probs
+
+
+def run_underconfident(
+    experiment: Experiment_2D,
+    probs: np.ndarray,
+    gammas: np.ndarray,
+    name: str,
+    pbar: bool | tqdm = True,
+    postfix: bool = True,
+):
+    results = np.zeros((len(probs), len(gammas)), dtype=int)
+
+    # Create the progress bar
+    if isinstance(pbar, bool):
+        pbar = tqdm(total=len(probs) * len(gammas), disable=not pbar)
+
+    # Run the experiment
+    for i, prob in enumerate(probs):
+        for j, gamma in enumerate(gammas):
+            if postfix:
+                pbar.set_postfix(
+                    prob=f"{prob:<4.2f}",
+                    gamma=f"{gamma:<4.2f}",
+                )
+            experiment.confident(action_success_prob=prob)
+            experiment.mdp.solve(
+                setup_name=name,
+                policy_name=f"Underconfident prob={prob:.2f} gamma={gamma:.2f}",
+                save_heatmap=False,
+            )
+
+            results[i, j] = experiment.mdp.policy[0, 0]
             pbar.update(1)
 
     return results, probs

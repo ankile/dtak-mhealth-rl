@@ -34,7 +34,7 @@ def make_cliff_strategy_heatmap(
         mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()
     ]
 
-    ax.legend(handles=legend_patches, loc="upper left", fontsize=6)
+    ax.legend(handles=legend_patches, loc="upper left", fontsize=5)
 
 
 def make_strategy_heatmap(
