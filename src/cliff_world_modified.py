@@ -31,9 +31,9 @@ def cliff_experiment(
         d=reward_mag,
         latent_reward=latent_reward,
     )
-    
+
     # hacky solution here
-    cliff_dict[width-1] = small_r_mag
+    cliff_dict[width - 1] = small_r_mag
 
     experiment = Experiment_2D(
         height,
@@ -50,8 +50,8 @@ def cliff_experiment(
 
     T_new = cliff_transition(
         T=experiment.mdp.T,
-        x=width,
-        y=height,
+        height=height,
+        width=width,
     )
 
     experiment.mdp.T = T_new
@@ -61,20 +61,21 @@ def cliff_experiment(
 
 if __name__ == "__main__":
     params = {
-    "prob": 0.4,
-    "gamma": 0.99,
-    "height": 4,
-    "width": 6,
-    "reward_mag": 1000,
-    "small_r_mag": 100,
-    "neg_mag": -1e4,
-    "latent_reward": 0,}
+        "prob": 0.4,
+        "gamma": 0.99,
+        "height": 4,
+        "width": 6,
+        "reward_mag": 1000,
+        "small_r_mag": 100,
+        "neg_mag": -1e4,
+        "latent_reward": 0,
+    }
 
     experiment = cliff_experiment(
         setup_name="Cliff_modified",
         **params,
     )
-        # Make plot with 5 columns where the first column is the parameters
+    # Make plot with 5 columns where the first column is the parameters
     # and the two plots span two columns each
 
     # create figure with 5 columns
@@ -130,7 +131,6 @@ if __name__ == "__main__":
 
     # Show the plot
     plt.show()
-
 
     # fig, ax = plt.subplots()
 

@@ -10,21 +10,15 @@ from visualization.worldviz import plot_world_reward
 
 
 def cliff_experiment(
-    setup_name: str,
     height,
     width,
-    prob,
-    gamma,
     reward_mag,
     small_r_mag,
-    neg_mag=-np.inf,
+    neg_mag=-1e-8,
     latent_reward=0,
     disengage_reward=0,
     allow_disengage=False,
 ) -> Experiment_2D:
-    if not os.path.exists(savepath := f"local_images/{setup_name}"):
-        os.makedirs(savepath)
-
     # Add one row for the disengage state if allowed
     if allow_disengage:
         height += 1
@@ -38,64 +32,27 @@ def cliff_experiment(
         disengage_reward=disengage_reward,
         allow_disengage=allow_disengage,
     )
-    
+
     # Adding the smaller reward
-    cliff_dict[width-1] = small_r_mag
+    cliff_dict[width - 1] = small_r_mag
 
     experiment = Experiment_2D(
         height,
         width,
         rewards_dict=cliff_dict,
-        gamma=gamma,
-        action_success_prob=prob,
         transition_mode="full",
     )
 
     T_new = cliff_transition(
         T=experiment.mdp.T,
-        x=width,
-        y=height,
+        height=height,
+        width=width,
         allow_disengage=allow_disengage,
     )
 
     experiment.mdp.T = T_new
 
     return experiment
-
-
-def get_all_absorbing_states(T, height, width):
-    absorbing_states = []
-
-    for state in range(height * width):
-        for action in range(4):
-            if T[action, state, state] == 1:
-                absorbing_states.append(state)
-
-    return absorbing_states
-
-
-def follow_policy(policy, height, width, initial_state, terminal_states):
-    action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
-    state = initial_state
-    actions_taken = []
-
-    while state not in terminal_states:
-        row, col = state // width, state % width
-        action = policy[row, col]
-        actions_taken.append(action_dict[action])
-
-        if action == 0:  # left
-            col = max(0, col - 1)
-        elif action == 1:  # right
-            col = min(width - 1, col + 1)
-        elif action == 2:  # up
-            row = max(0, row - 1)
-        elif action == 3:  # down
-            row = min(height - 1, row + 1)
-
-        state = row * width + col
-
-    return "".join(actions_taken)
 
 
 if __name__ == "__main__":
@@ -105,17 +62,14 @@ if __name__ == "__main__":
         "height": 3,
         "width": 8,
         "reward_mag": 1e2,
-        "small_r_mag": 0, #small_mag of 0 = normal cliff world
+        "small_r_mag": 0,  # small_mag of 0 = normal cliff world
         "neg_mag": -1e2,
         "latent_reward": -1,
         "disengage_reward": None,
         "allow_disengage": False,
     }
 
-    experiment = cliff_experiment(
-        setup_name="Cliff",
-        **params,
-    )
+    experiment = cliff_experiment(**params)
 
     # Make plot with 5 columns where the first column is the parameters
     # and the two plots span two columns each
@@ -157,8 +111,6 @@ if __name__ == "__main__":
     plot_world_reward(experiment, setup_name="Cliff", ax=ax2, show=False, mask=mask)
 
     experiment.mdp.solve(
-        setup_name="Cliff",
-        policy_name="Baseline World",
         save_heatmap=False,
         show_heatmap=False,
         heatmap_ax=ax3,
@@ -166,20 +118,6 @@ if __name__ == "__main__":
         base_dir="local_images",
         label_precision=1,
     )
-
-    # TODO: Debugging purposes
-    terminal = get_all_absorbing_states(
-        experiment.mdp.T, params["height"], params["width"]
-    )
-    policy_str = follow_policy(
-        experiment.mdp.policy,
-        height=params["height"],
-        width=params["width"],
-        initial_state=(params["height"] - 1) * params["width"],
-        terminal_states=terminal,
-    )
-
-    print(policy_str)
 
     # set titles for subplots
     ax1.set_title("Parameters", fontsize=16)

@@ -13,6 +13,7 @@ from multiprocessing import Pool
 
 # Import the cliff world
 from cliff_world import cliff_experiment
+from worlds.mdp2d import Experiment_2D
 from utils.policy import follow_policy, get_all_absorbing_states, param_generator
 from visualization.strategy import make_cliff_strategy_heatmap
 
@@ -26,30 +27,25 @@ def run_cliff_experiment(
     policies = {}
     p2idx = {}
 
-    for (i, prob), (j, gamma) in itertools.product(enumerate(probs), enumerate(gammas)):
-        experiment = cliff_experiment(
-            setup_name="Cliff",
-            **params,
-            prob=prob,
-            gamma=gamma,
-        )
+    experiment: Experiment_2D = cliff_experiment(**params)
 
-        experiment.mdp.solve(
-            setup_name="Cliff",
-            policy_name="Cliff Policy",
+    terminal = get_all_absorbing_states(
+        experiment.mdp.T, params["height"], params["width"]
+    )
+
+    for (i, prob), (j, gamma) in itertools.product(enumerate(probs), enumerate(gammas)):
+        mdp = experiment.set_user_params(prob=prob, gamma=gamma)
+
+        mdp.solve(
             save_heatmap=False,
             show_heatmap=False,
             heatmap_ax=None,
             heatmap_mask=None,
-            base_dir="local_images",
             label_precision=1,
         )
 
-        terminal = get_all_absorbing_states(
-            experiment.mdp.T, params["height"], params["width"]
-        )
         policy_str = follow_policy(
-            experiment.mdp.policy,
+            mdp.policy,
             height=params["height"],
             width=params["width"],
             initial_state=(params["height"] - 1) * params["width"],
@@ -93,8 +89,9 @@ if __name__ == "__main__":
         "small_r_mag": 0,
         "neg_mag": -1e8,
         "latent_reward": 0,
-        "disengage_reward": 1,
-        "allow_disengage": True,
+        # These are off by default because they turn the world into a compound world
+        "disengage_reward": 0,
+        "allow_disengage": False,
     }
 
     # Set the number of subplots per row
@@ -108,12 +105,13 @@ if __name__ == "__main__":
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
+        "width": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
+        "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
+        # The rest of these are not interesting to change for different reasons
         # "reward_mag": np.linspace(100, 500, cols),
         # "small_r_mag": np.linspace(25, 100, cols),
         # "neg_mag": np.linspace(-20, 0, cols),
         # "latent_reward": np.linspace(-3, 0, cols),
-        "width": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
-        "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
         # "disengage_reward": np.linspace(0, 10, cols),
         # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
     }
@@ -123,6 +121,7 @@ if __name__ == "__main__":
     run_one_world_partial = partial(run_one_world, default_params, probs, gammas)
 
     n_processes = os.cpu_count()
+    # n_processes = 1
     print(f"Running {n_processes} processes...")
     start = datetime.now()
     with Pool(processes=n_processes) as pool:
@@ -131,6 +130,7 @@ if __name__ == "__main__":
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 total=rows * cols,
                 desc=f"Running with cols={cols}, rows={rows}, granularity={granularity}",
+                cols=0,
             )
         )
     print(f"Finished in {datetime.now() - start}")

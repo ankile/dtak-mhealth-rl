@@ -55,26 +55,26 @@ def cliff_reward(
     return reward_dict
 
 
-def cliff_transition(T, x, y, allow_disengage=False) -> np.ndarray:
+def cliff_transition(T, width, height, allow_disengage=False) -> np.ndarray:
     """
     Makes the cliff absorbing.
     """
 
     cliff_begin_x = 1
-    cliff_end_x = x - 1
+    cliff_end_x = width - 1
     # The cliff is one cell above the bottom row when we allow for disengagement
-    cliff_y = y - (1 + int(allow_disengage))
+    cliff_y = height - (1 + int(allow_disengage))
 
     # Make the cliff absorbing
     T_new = T.copy()
 
     for i in range(cliff_begin_x, cliff_end_x):
-        idx = x * cliff_y + i
+        idx = width * cliff_y + i
         make_absorbing(T_new, idx)
 
     if allow_disengage:
-        for i in range(0, x):
-            idx = x * (y - 1) + i
+        for i in range(0, width):
+            idx = width * (height - 1) + i
             make_absorbing(T_new, idx)
 
     return T_new
