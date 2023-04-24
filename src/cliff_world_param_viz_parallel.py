@@ -13,45 +13,8 @@ from multiprocessing import Pool
 
 # Import the cliff world
 from cliff_world import cliff_experiment
+from utils.policy import follow_policy, get_all_absorbing_states, param_generator
 from visualization.strategy import make_cliff_strategy_heatmap
-
-
-def follow_policy(policy, height, width, initial_state, terminal_states):
-    action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
-    state = initial_state
-    actions_taken = []
-    seen_states = set()
-
-    while state not in terminal_states and state not in seen_states:
-        seen_states.add(state)
-        row, col = state // width, state % width
-        action = policy[row, col]
-        actions_taken.append(action_dict[action])
-
-        if action == 0:  # left
-            col = max(0, col - 1)
-        elif action == 1:  # right
-            col = min(width - 1, col + 1)
-        elif action == 2:  # up
-            row = max(0, row - 1)
-        elif action == 3:  # down
-            row = min(height - 1, row + 1)
-
-        state = row * width + col
-
-    return "".join(actions_taken)
-
-
-def get_all_absorbing_states(T, height, width):
-    absorbing_states = set()
-
-    for state in range(height * width):
-        for action in range(4):
-            if T[action, state, state] == 1:
-                absorbing_states.add(state)
-                break
-
-    return absorbing_states
 
 
 def run_cliff_experiment(
@@ -102,12 +65,6 @@ def run_cliff_experiment(
     return data, p2idx
 
 
-def param_generator(parameters):
-    for i, (param_name, param_values) in enumerate(parameters.items()):
-        for value in param_values:
-            yield (param_name, value)
-
-
 def run_one_world(default_params, probs, gammas, param_value):
     param, value = param_value
     config = {**default_params, param: value}
@@ -136,8 +93,8 @@ if __name__ == "__main__":
         "small_r_mag": 0,
         "neg_mag": -1e8,
         "latent_reward": 0,
-        "disengage_reward": None,
-        "allow_disengage": False,
+        "disengage_reward": 1,
+        "allow_disengage": True,
     }
 
     # Set the number of subplots per row
