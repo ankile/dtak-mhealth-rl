@@ -13,6 +13,7 @@ from multiprocessing import Pool
 
 # Import the cliff world
 from cliff_world import cliff_experiment
+from utils.cliff import cliff_transition
 from worlds.mdp2d import Experiment_2D
 from utils.policy import follow_policy, get_all_absorbing_states, param_generator
 from visualization.strategy import make_cliff_strategy_heatmap
@@ -26,17 +27,16 @@ def run_cliff_experiment(
     data = np.zeros((len(probs), len(gammas)), dtype=int)
     policies = {}
     p2idx = {}
-
     experiment: Experiment_2D = cliff_experiment(**params)
 
-    terminal = get_all_absorbing_states(
-        experiment.mdp.T, params["height"], params["width"]
-    )
+    terminal = get_all_absorbing_states(experiment.mdp)
 
     for (i, prob), (j, gamma) in itertools.product(enumerate(probs), enumerate(gammas)):
-        mdp = experiment.set_user_params(prob=prob, gamma=gamma)
+        experiment.set_user_params(
+            prob=prob, gamma=gamma, transition_func=cliff_transition
+        )
 
-        mdp.solve(
+        experiment.mdp.solve(
             save_heatmap=False,
             show_heatmap=False,
             heatmap_ax=None,
@@ -45,7 +45,7 @@ def run_cliff_experiment(
         )
 
         policy_str = follow_policy(
-            mdp.policy,
+            experiment.mdp.policy,
             height=params["height"],
             width=params["width"],
             initial_state=(params["height"] - 1) * params["width"],
@@ -81,6 +81,8 @@ if __name__ == "__main__":
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    run_parallel = False
 
     default_params = {
         "height": 5,
@@ -120,8 +122,7 @@ if __name__ == "__main__":
 
     run_one_world_partial = partial(run_one_world, default_params, probs, gammas)
 
-    n_processes = os.cpu_count()
-    # n_processes = 1
+    n_processes = os.cpu_count() if run_parallel else 1
     print(f"Running {n_processes} processes...")
     start = datetime.now()
     with Pool(processes=n_processes) as pool:
@@ -130,7 +131,7 @@ if __name__ == "__main__":
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 total=rows * cols,
                 desc=f"Running with cols={cols}, rows={rows}, granularity={granularity}",
-                cols=0,
+                ncols=0,
             )
         )
     print(f"Finished in {datetime.now() - start}")

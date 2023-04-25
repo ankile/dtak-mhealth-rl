@@ -1,3 +1,6 @@
+from worlds.mdp2d import MDP_2D
+
+
 def follow_policy(policy, height, width, initial_state, terminal_states):
     action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
     state = initial_state
@@ -24,10 +27,12 @@ def follow_policy(policy, height, width, initial_state, terminal_states):
     return "".join(actions_taken)
 
 
-def get_all_absorbing_states(T, height, width):
+def get_all_absorbing_states(mdp: MDP_2D):
+    T = mdp.T
+    n_states = T.shape[1]
     absorbing_states = set()
 
-    for state in range(height * width):
+    for state in range(n_states):
         for action in range(4):
             if T[action, state, state] == 1:
                 absorbing_states.add(state)

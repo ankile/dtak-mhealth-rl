@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import Callable
+
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
-from utils.cliff import cliff_transition
+
 from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
 
@@ -331,12 +333,17 @@ class Experiment_2D:
 
         self.mdp = MDP_2D(S, A, T, R, self.gamma)
 
-    def set_user_params(self, prob, gamma) -> MDP_2D:
+    def set_user_params(
+        self,
+        prob: float,
+        gamma: float,
+        transition_func: Callable[..., np.ndarray],
+    ) -> MDP_2D:
         self.action_success_prob = prob
         self.gamma = gamma
 
         S, A, T, R = self.make_MDP_params()
-        T = cliff_transition(T, self.height, self.width)
+        T = transition_func(T, height=self.height, width=self.width)
         self.mdp = MDP_2D(S, A, T, R, self.gamma)
 
         return self.mdp
