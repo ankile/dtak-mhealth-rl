@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
+from src.utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
 
 class MDP_2D:

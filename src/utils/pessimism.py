@@ -5,8 +5,8 @@ import numpy as np
 import seaborn as sns
 from tqdm import tqdm
 
-from utils.wall import wall
-from worlds.mdp2d import Experiment_2D
+from src.utils.wall import wall
+from src.worlds.mdp2d import Experiment_2D
 
 
 def run_pessimism(

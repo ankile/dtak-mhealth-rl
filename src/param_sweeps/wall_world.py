@@ -6,13 +6,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from utils.pessimism import (
+from src.utils.pessimism import (
     run_underconfident,
     run_pessimism,
     setup_wall_world_experiment,
 )
 
-from visualization.strategy import plot_wall_strategy_heatmap
+from src.visualization.strategy import plot_wall_strategy_heatmap
 
 
 # Naming the setup

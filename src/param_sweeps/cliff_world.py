@@ -1,8 +1,7 @@
 import numpy as np
 
-from cliff_world import cliff_experiment
-from utils.cliff import cliff_transition
-from utils.param_sweep import run_param_sweep
+from src.utils.cliff import cliff_transition, cliff_experiment
+from src.utils.param_sweep import run_param_sweep
 
 if __name__ == "__main__":
     # === Start of setup ===

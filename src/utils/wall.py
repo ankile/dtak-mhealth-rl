@@ -1,7 +1,9 @@
-from worlds.mdp2d import Experiment_2D
+import os
+
 import numpy as np
 import seaborn as sns
-import os
+
+from src.worlds.mdp2d import Experiment_2D
 
 
 def wall(
@@ -71,7 +73,7 @@ if __name__ == "__main__":
     # UNDERCONFIDENT + OVERCONFIDENT EXPERIMENT RUNS:
     for prob in np.arange(0.05, 0.5, 0.05):
         test.mdp.reset()
-        confident = test.confident(make_right_prob=prob)
+        confident = test.confident(action_success_prob=prob)
         if prob < default_prob:
             test.mdp.solve(
                 setup_name=setup_name,

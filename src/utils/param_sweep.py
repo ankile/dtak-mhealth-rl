@@ -10,9 +10,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from utils.policy import follow_policy, get_all_absorbing_states, param_generator
-from visualization.strategy import make_general_strategy_heatmap
-from worlds.mdp2d import Experiment_2D
+from src.utils.policy import follow_policy, get_all_absorbing_states, param_generator
+from src.visualization.strategy import make_general_strategy_heatmap
+from src.worlds.mdp2d import Experiment_2D
 
 
 def run_experiment(

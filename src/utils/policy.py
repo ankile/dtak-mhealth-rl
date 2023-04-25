@@ -1,4 +1,4 @@
-from worlds.mdp2d import MDP_2D
+from src.worlds.mdp2d import MDP_2D
 
 
 def follow_policy(policy, height, width, initial_state, terminal_states):
