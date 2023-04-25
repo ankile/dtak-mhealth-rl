@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # === Start of setup === #
     setup_name = "Cliff World Param Viz"
 
-    run_parallel = False
+    run_parallel = True
 
     default_params = {
         "height": 5,
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     cols = 8  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 20  # 5, 10, 20
+    granularity = 50  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.3, 0.99, granularity)

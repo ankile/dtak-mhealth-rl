@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from src.utils.enums import TransitionMode
+from src.utils.pessimism import apply_pessimism_to_transition
 
 from src.utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
@@ -345,12 +346,26 @@ class Experiment_2D:
         prob: float,
         gamma: float,
         transition_func: Callable[..., np.ndarray],
+        use_pessimistic: bool = False,
     ) -> MDP_2D:
-        self.action_success_prob = prob
+        """
+        For now, prob can serve as both:
+        - 1. The normal notion of probability of success
+        - 2. The scaling factor for pessimistic transitions
+
+        (Hopefully, better ways to do this will be implemented in the future)
+        """
         self.gamma = gamma
+
+        if not use_pessimistic:
+            self.action_success_prob = prob
 
         S, A, T, R = self.make_MDP_params()
         T = transition_func(T, height=self.height, width=self.width)
+
+        if use_pessimistic:
+            T = apply_pessimism_to_transition(T, self.rewards_dict, prob)
+
         self.mdp = MDP_2D(S, A, T, R, self.gamma)
 
         return self.mdp
