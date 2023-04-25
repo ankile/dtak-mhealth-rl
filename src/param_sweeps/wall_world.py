@@ -31,7 +31,7 @@ if __name__ == "__main__":
     cols = 5  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 30  # 5, 10, 20
+    granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
     scalers, probs = None, None
@@ -40,12 +40,12 @@ if __name__ == "__main__":
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
-        "reward_mag": np.linspace(100, 500, cols),
-        "neg_mag": np.linspace(-20, 0, cols),
-        "latent_cost": list(range(-int(cols / 2), int(cols / 2) + 1)),
+        "height": list(range(4 - int(cols / 2), 4 + int(cols / 2) + 1)),
+        "width": list(range(7 - int(cols / 2), 7 + int(cols / 2) + 1)),
+        "reward_mag": np.linspace(100, 400, cols),
+        "neg_mag": np.linspace(-20, -7, cols),
+        # "latent_cost": list(range(-int(cols / 2), int(cols / 2) + 1)),
         # "prob": np.linspace(0.5, 0.95, cols),
-        "width": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
-        "height": list(range(6 - int(cols / 2), 6 + int(cols / 2) + 1)),
     }
 
     rows = len(search_parameters)

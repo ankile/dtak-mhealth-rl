@@ -181,7 +181,11 @@ def run_param_sweep(
 
     # Create the figure and axes to plot on
     fig, axs = plt.subplots(
-        nrows=rows, ncols=cols, figsize=(16, 3 * rows), sharex=True, sharey=True
+        nrows=rows,
+        ncols=cols,
+        figsize=(round(2.5 * cols), round(2.5 * rows)),
+        sharex=True,
+        sharey=True,
     )
     fig.subplots_adjust(top=0.9)
 
