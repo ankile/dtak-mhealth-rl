@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sns
 
 
-def make_cliff_strategy_heatmap(
+def make_general_strategy_heatmap(
     results,
     probs,
     gammas,
@@ -31,7 +31,7 @@ def make_cliff_strategy_heatmap(
 
     # Create legend patches
     legend_patches = [
-        mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()
+        mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()  # type: ignore
     ]
 
     ax.legend(handles=legend_patches, loc="upper left", fontsize=5)
