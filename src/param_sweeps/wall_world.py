@@ -3,11 +3,16 @@ from src.utils.param_sweep import run_param_sweep
 from src.utils.transition_matrix import id_func
 from src.utils.wall import make_wall_experiment
 
+
+def get_start_state(height, width):
+    return 0
+
+
 if __name__ == "__main__":
     # === Set up the experiment === #
     setup_name = "Pessimist Wall World"
 
-    run_parallel = False
+    run_parallel = True
 
     # Setting the parameters
     default_params = dict(
@@ -40,9 +45,6 @@ if __name__ == "__main__":
     }
 
     rows = len(search_parameters)
-
-    def get_start_state(height, width):
-        return 0
 
     # === End of setup === #
 

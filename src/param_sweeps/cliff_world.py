@@ -3,6 +3,11 @@ import numpy as np
 from src.utils.cliff import make_cliff_transition, make_cliff_experiment
 from src.utils.param_sweep import run_param_sweep
 
+
+def get_start_state(height, width):
+    return (height - 1) * width
+
+
 if __name__ == "__main__":
     # === Start of setup === #
     setup_name = "Cliff World Param Viz"
@@ -25,7 +30,7 @@ if __name__ == "__main__":
     cols = 8  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 10  # 5, 10, 20
+    granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.3, 0.99, granularity)
@@ -44,9 +49,6 @@ if __name__ == "__main__":
     }
 
     rows = len(search_parameters)
-
-    def get_start_state(height, width):
-        return (height - 1) * width
 
     # === End of setup === #
 
