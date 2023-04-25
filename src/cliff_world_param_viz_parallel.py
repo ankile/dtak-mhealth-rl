@@ -2,8 +2,8 @@ from datetime import datetime
 import itertools
 import os
 import pickle
+from typing import Callable, Tuple
 from matplotlib import pyplot as plt
-import matplotlib.patches as mpatches
 from functools import partial
 
 import numpy as np
@@ -19,15 +19,15 @@ from utils.policy import follow_policy, get_all_absorbing_states, param_generato
 from visualization.strategy import make_cliff_strategy_heatmap
 
 
-def run_cliff_experiment(
-    params,
-    gammas,
-    probs,
+def run_experiment(
+    experiment: Experiment_2D,
+    params: dict,
+    gammas: np.ndarray,
+    probs: np.ndarray,
 ):
     data = np.zeros((len(probs), len(gammas)), dtype=int)
     policies = {}
     p2idx = {}
-    experiment: Experiment_2D = cliff_experiment(**params)
 
     terminal = get_all_absorbing_states(experiment.mdp)
 
@@ -61,66 +61,53 @@ def run_cliff_experiment(
     return data, p2idx
 
 
-def run_one_world(default_params, probs, gammas, param_value):
+def run_one_world(
+    param_value: Tuple[str, float],
+    *,
+    create_experiment_func: Callable[..., Experiment_2D],
+    default_params: dict,
+    probs: np.ndarray,
+    gammas: np.ndarray,
+):
     param, value = param_value
-    config = {**default_params, param: value}
-    data, p2idx = run_cliff_experiment(
-        config,
+    params = {**default_params, param: value}
+    experiment: Experiment_2D = create_experiment_func(**params)
+    data, p2idx = run_experiment(
+        experiment,
+        params,
         gammas,
         probs,
     )
-
     return data, p2idx, param, value
 
 
-if __name__ == "__main__":
-    # Naming the setup
-    setup_name = "Cliff World Param Viz"
+def init_outdir(setup_name):
     setup_name = setup_name.replace(" ", "_").lower()
     output_dir = f"local_images/{setup_name}"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    return output_dir
 
-    run_parallel = False
 
-    default_params = {
-        "height": 5,
-        "width": 9,
-        "reward_mag": 1e2,
-        "small_r_mag": 0,
-        "neg_mag": -1e8,
-        "latent_reward": 0,
-        # These are off by default because they turn the world into a compound world
-        "disengage_reward": 0,
-        "allow_disengage": False,
-    }
-
-    # Set the number of subplots per row
-    cols = 8  # 5, 7, 9
-
-    # Set the number of scales and gammas to use
-    granularity = 20  # 5, 10, 20
-
-    # Set up parameters to search over
-    probs = np.linspace(0.3, 0.99, granularity)
-    gammas = np.linspace(0.4, 0.99, granularity)
-
-    search_parameters = {
-        "width": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
-        "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
-        # The rest of these are not interesting to change for different reasons
-        # "reward_mag": np.linspace(100, 500, cols),
-        # "small_r_mag": np.linspace(25, 100, cols),
-        # "neg_mag": np.linspace(-20, 0, cols),
-        # "latent_reward": np.linspace(-3, 0, cols),
-        # "disengage_reward": np.linspace(0, 10, cols),
-        # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
-    }
-
-    rows = len(search_parameters)
-
-    run_one_world_partial = partial(run_one_world, default_params, probs, gammas)
+def run_param_sweep(
+    output_dir,
+    run_parallel,
+    default_params,
+    cols,
+    granularity,
+    probs,
+    gammas,
+    search_parameters,
+    rows,
+):
+    run_one_world_partial = partial(
+        run_one_world,
+        create_experiment_func=cliff_experiment,
+        default_params=default_params,
+        probs=probs,
+        gammas=gammas,
+    )
 
     n_processes = os.cpu_count() if run_parallel else 1
     print(f"Running {n_processes} processes...")
@@ -193,3 +180,60 @@ if __name__ == "__main__":
 
     # Show the plot
     plt.show()
+
+
+if __name__ == "__main__":
+    # === Start of setup ===
+    output_dir = init_outdir(setup_name="Cliff World Param Viz")
+
+    run_parallel = True
+
+    default_params = {
+        "height": 5,
+        "width": 9,
+        "reward_mag": 1e2,
+        "small_r_mag": 0,
+        "neg_mag": -1e8,
+        "latent_reward": 0,
+        # These are off by default because they turn the world into a compound world
+        "disengage_reward": 0,
+        "allow_disengage": False,
+    }
+
+    # Set the number of subplots per row
+    cols = 8  # 5, 7, 9
+
+    # Set the number of scales and gammas to use
+    granularity = 20  # 5, 10, 20
+
+    # Set up parameters to search over
+    probs = np.linspace(0.3, 0.99, granularity)
+    gammas = np.linspace(0.4, 0.99, granularity)
+
+    search_parameters = {
+        "width": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
+        "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
+        # The rest of these are not interesting to change for different reasons
+        # "reward_mag": np.linspace(100, 500, cols),
+        # "small_r_mag": np.linspace(25, 100, cols),
+        # "neg_mag": np.linspace(-20, 0, cols),
+        # "latent_reward": np.linspace(-3, 0, cols),
+        # "disengage_reward": np.linspace(0, 10, cols),
+        # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
+    }
+
+    rows = len(search_parameters)
+
+    # === End of setup ===
+
+    run_param_sweep(
+        output_dir,
+        run_parallel,
+        default_params,
+        cols,
+        granularity,
+        probs,
+        gammas,
+        search_parameters,
+        rows,
+    )
