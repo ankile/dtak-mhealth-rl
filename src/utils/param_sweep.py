@@ -5,10 +5,14 @@ from datetime import datetime
 from functools import partial
 from multiprocessing import Pool
 from typing import Callable, Tuple
+import multiprocessing
+from contextlib import AbstractContextManager
+from typing import Callable, Any
 
 import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from src.utils.multithreading import OptionalPool
 
 from src.utils.policy import follow_policy, get_all_absorbing_states, param_generator
 from src.visualization.strategy import make_general_strategy_heatmap
@@ -21,6 +25,7 @@ def run_experiment(
     params: dict,
     gammas: np.ndarray,
     probs: np.ndarray,
+    start_state: int,
 ):
     data = np.zeros((len(probs), len(gammas)), dtype=int)
     policies = {}
@@ -45,7 +50,7 @@ def run_experiment(
             experiment.mdp.policy,
             height=params["height"],
             width=params["width"],
-            initial_state=(params["height"] - 1) * params["width"],
+            initial_state=start_state,
             terminal_states=terminal,
         )
 
@@ -66,6 +71,7 @@ def run_one_world(
     default_params: dict,
     probs: np.ndarray,
     gammas: np.ndarray,
+    get_start_state: Callable[[int, int], int],
 ):
     param, value = param_value
     params = {**default_params, param: value}
@@ -76,6 +82,7 @@ def run_one_world(
         params,
         gammas,
         probs,
+        start_state=get_start_state(params["height"], params["width"]),
     )
     return data, p2idx, param, value
 
@@ -98,6 +105,7 @@ def run_param_sweep(
     transition_matrix_func,
     rows,
     cols,
+    get_start_state,
     granularity,
     probs,
     gammas,
@@ -110,12 +118,13 @@ def run_param_sweep(
         default_params=default_params,
         probs=probs,
         gammas=gammas,
+        get_start_state=get_start_state,
     )
 
-    n_processes = os.cpu_count() if run_parallel else 1
+    n_processes = (os.cpu_count() if run_parallel else 1) or 1
     print(f"Running {n_processes} processes...")
     start = datetime.now()
-    with Pool(processes=n_processes) as pool:
+    with OptionalPool(processes=n_processes) as pool:
         strategy_data = list(
             tqdm(
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),

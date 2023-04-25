@@ -33,10 +33,8 @@ def get_all_absorbing_states(mdp: MDP_2D):
     absorbing_states = set()
 
     for state in range(n_states):
-        for action in range(4):
-            if T[action, state, state] == 1:
-                absorbing_states.add(state)
-                break
+        if all(T[action, state, state] == 1 for action in range(4)):
+            absorbing_states.add(state)
 
     return absorbing_states
 

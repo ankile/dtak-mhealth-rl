@@ -1,9 +1,11 @@
 from datetime import datetime
+from enum import Enum
 from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from src.utils.enums import TransitionMode
 
 from src.utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
@@ -166,12 +168,12 @@ class MDP_2D:
 class Experiment_2D:
     def __init__(
         self,
-        height,
-        width,
+        height: int,
+        width: int,
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
-        transition_mode="simple",
+        transition_mode: TransitionMode = TransitionMode.SIMPLE,
     ):
         self.height = height
         self.width = width
@@ -217,7 +219,7 @@ class Experiment_2D:
         height,
         width,
         action_success_prob,
-        mode="simple",
+        mode: TransitionMode = TransitionMode.SIMPLE,
     ) -> None:
         def _set_probs_for_state_simple(i, action, target):
             if target == i:
@@ -249,8 +251,8 @@ class Experiment_2D:
                     T[action, i, i] += remaining_prob
 
         set_functions = {
-            "simple": _set_probs_for_state_simple,
-            "full": _set_probs_for_state,
+            TransitionMode.SIMPLE: _set_probs_for_state_simple,
+            TransitionMode.FULL: _set_probs_for_state,
         }
 
         assert mode in set_functions, f"Mode {mode} not supported"
@@ -318,7 +320,12 @@ class Experiment_2D:
         S, A, T, R = self.make_MDP_params()
         self.mdp = MDP_2D(S, A, T, R, self.gamma)
 
-    def pessimistic(self, scaling, new_gamma=None, transition_mode="simple"):
+    def pessimistic(
+        self,
+        scaling,
+        new_gamma=None,
+        transition_mode: TransitionMode = TransitionMode.SIMPLE,
+    ):
         self.transition_mode = transition_mode
         S, A, T, R = self.make_MDP_params()
 

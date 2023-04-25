@@ -2,11 +2,12 @@ import os
 
 import numpy as np
 import seaborn as sns
+from src.utils.enums import TransitionMode
 
 from src.worlds.mdp2d import Experiment_2D
 
 
-def wall(
+def wall_reward(
     height: int,
     width: int,
     wall_width: int,
@@ -35,6 +36,33 @@ def wall(
     return reward_dict
 
 
+def make_wall_experiment(
+    height,
+    width,
+    neg_mag,
+    reward_mag,
+    latent_cost,
+) -> Experiment_2D:
+    wall_dict = wall_reward(
+        height,
+        width,
+        wall_width=width - 2,
+        wall_height=height - 1,
+        neg_mag=neg_mag,
+        reward_mag=reward_mag,
+        latent_cost=latent_cost,
+    )
+
+    experiment = Experiment_2D(
+        height,
+        width,
+        rewards_dict=wall_dict,
+        transition_mode=TransitionMode.SIMPLE,
+    )
+
+    return experiment
+
+
 if __name__ == "__main__":
     default_prob = 0.8
     sns.set()
@@ -48,7 +76,7 @@ if __name__ == "__main__":
     height = 10
     width = 5
 
-    wall_dict = wall(
+    wall_dict = wall_reward(
         height,
         width,
         wall_width=3,

@@ -1,12 +1,19 @@
-import os
-
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from tqdm import tqdm
 
-from src.utils.wall import wall
 from src.worlds.mdp2d import Experiment_2D
+
+
+def apply_pessimism_to_transition(T, rewards_dict, scaling) -> np.ndarray:
+    # Change the transition probabilities to be more pessimistic
+    neg_rew_idx = [idx for idx in rewards_dict if rewards_dict[idx] < 0]
+
+    T_new = T.copy()
+
+    T[:, :, neg_rew_idx] *= scaling
+    T /= T.sum(axis=2, keepdims=True)
+
+    return T_new
 
 
 def run_pessimism(
@@ -83,33 +90,3 @@ def run_underconfident(
             pbar.update(1)
 
     return results, probs
-
-
-def setup_wall_world_experiment(
-    setup_name,
-    height,
-    width,
-    prob,
-    gamma,
-    neg_mag,
-    reward_mag,
-    latent_cost,
-) -> Experiment_2D:
-    # Set up the experiment
-    sns.set()
-    if not os.path.exists(f"images/{setup_name}"):
-        os.makedirs(f"images/{setup_name}")
-
-    wall_dict = wall(
-        height,
-        width,
-        wall_width=width - 2,
-        wall_height=height - 1,
-        neg_mag=neg_mag,
-        reward_mag=reward_mag,
-        latent_cost=latent_cost,
-    )
-
-    return Experiment_2D(
-        height, width, rewards_dict=wall_dict, gamma=gamma, action_success_prob=prob
-    )

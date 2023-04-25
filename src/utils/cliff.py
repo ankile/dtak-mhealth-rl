@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
+from src.utils.enums import TransitionMode
 
 from src.utils.transition_matrix import make_absorbing
 from src.visualization.worldviz import plot_world_reward
@@ -59,7 +60,7 @@ def cliff_reward(
     return reward_dict
 
 
-def cliff_transition(T, height, width, allow_disengage=False) -> np.ndarray:
+def make_cliff_transition(T, height, width, allow_disengage=False) -> np.ndarray:
     """
     Makes the cliff absorbing.
     """
@@ -84,7 +85,7 @@ def cliff_transition(T, height, width, allow_disengage=False) -> np.ndarray:
     return T_new
 
 
-def cliff_experiment(
+def make_cliff_experiment(
     height,
     width,
     reward_mag,
@@ -115,10 +116,10 @@ def cliff_experiment(
         height,
         width,
         rewards_dict=cliff_dict,
-        transition_mode="full",
+        transition_mode=TransitionMode.FULL,
     )
 
-    T_new = cliff_transition(
+    T_new = make_cliff_transition(
         T=experiment.mdp.T,
         height=height,
         width=width,
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         "allow_disengage": False,
     }
 
-    experiment = cliff_experiment(**params)
+    experiment = make_cliff_experiment(**params)
 
     # Make plot with 5 columns where the first column is the parameters
     # and the two plots span two columns each
