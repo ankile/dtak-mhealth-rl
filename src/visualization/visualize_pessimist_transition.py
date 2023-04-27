@@ -1,14 +1,13 @@
-from worlds.mdp1d import *
 import os
-from datetime import datetime
-from utils.wall import wall
-from tqdm import tqdm
-
-# import mpatches for the legend
-import matplotlib.patches as mpatches
 
 # import ticker for the x-axis
 import matplotlib.ticker as ticker
+import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
+
+from src.utils.wall import wall_reward
+from src.worlds.mdp2d import Experiment_2D
 
 # Naming the setup
 setup_name = "Optimist Pessimist"
@@ -31,7 +30,7 @@ sns.set()
 if not os.path.exists(f"images/{setup_name}"):
     os.makedirs(f"images/{setup_name}")
 
-wall_dict = wall(
+wall_dict = wall_reward(
     height,
     width,
     wall_width=width - 2,
@@ -60,8 +59,8 @@ fig, ax = plt.subplots(facecolor="white", figsize=(10, 6))
 ax.grid(False)
 
 ax.plot(data[:, 0], data[:, 1], color="black")
-ax.fill_between(data[:, 0], data[:, 1], 1, color="blue", alpha=0.5)
-ax.fill_between(data[:, 0], 0, data[:, 1], color="red", alpha=0.5)
+ax.fill_between(data[:, 0], data[:, 1], 1, color="blue", alpha=0.5)  # type: ignore
+ax.fill_between(data[:, 0], 0, data[:, 1], color="red", alpha=0.5)  # type: ignore
 ax.axhline(0.5, color="black", linestyle="--", label="50% probability")
 ax.axhline(0.2, color="black", linestyle=":", label="Default probability")
 ax.axhline(0.8, color="black", linestyle="-.", label="80% probability")

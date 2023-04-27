@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from worlds.mdp2d import Experiment_2D
+from src.worlds.mdp2d import Experiment_2D
 
 
 def plot_world_reward(

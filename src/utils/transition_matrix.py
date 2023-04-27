@@ -32,3 +32,7 @@ def make_absorbing(T, idx):
     for a in range(4):
         for j in range(T.shape[2]):
             T[a, idx, j] = int(idx == j)
+
+
+def id_func(T, *args, **kwargs):
+    return T

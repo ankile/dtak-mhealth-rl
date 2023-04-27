@@ -1,8 +1,14 @@
 from datetime import datetime
+from enum import Enum
+from typing import Callable
+
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
-from utils.transition_matrix import make_absorbing, transition_matrix_is_valid
+from src.utils.enums import TransitionMode
+from src.utils.pessimism import apply_pessimism_to_transition
+
+from src.utils.transition_matrix import make_absorbing, transition_matrix_is_valid
 
 
 class MDP_2D:
@@ -163,30 +169,33 @@ class MDP_2D:
 class Experiment_2D:
     def __init__(
         self,
-        height,
-        width,
+        height: int,
+        width: int,
         action_success_prob=0.8,
         rewards_dict={-1: 100, -2: -100, -6: -100, -10: -100},
         gamma=0.9,
-        transition_mode="simple",
+        transition_mode: TransitionMode = TransitionMode.SIMPLE,
     ):
-        fixed_rewards_dict = {}
-        for idx in rewards_dict:
-            if not (idx >= 0 and idx < width * height):
-                fixed_rewards_dict[idx % (width * height)] = rewards_dict[idx]
-            else:
-                fixed_rewards_dict[idx] = rewards_dict[idx]
-        rewards_dict = fixed_rewards_dict
-
-        S, A, T, R, gamma = self.make_MDP_params(
-            height, width, action_success_prob, rewards_dict, gamma, transition_mode
-        )
-        self.rewards_dict = rewards_dict
         self.height = height
         self.width = width
         self.gamma = gamma
         self.action_success_prob = action_success_prob
-        self.mdp = MDP_2D(S, A, T, R, gamma)
+        self.transition_mode = transition_mode
+
+        self.rewards_dict = self.fix_rewards_dict(rewards_dict)
+
+        S, A, T, R = self.make_MDP_params()
+        self.mdp: MDP_2D = MDP_2D(S, A, T, R, gamma)
+
+    def fix_rewards_dict(self, rewards_dict):
+        fixed_rewards_dict = {}
+        for idx in rewards_dict:
+            if not (idx >= 0 and idx < self.width * self.height):
+                fixed_rewards_dict[idx % (self.width * self.height)] = rewards_dict[idx]
+            else:
+                fixed_rewards_dict[idx] = rewards_dict[idx]
+        rewards_dict = fixed_rewards_dict
+        return rewards_dict
 
     @staticmethod
     def _get_target(i, action, width, height):
@@ -206,8 +215,13 @@ class Experiment_2D:
 
     @staticmethod
     def _fill_transition_matrix(
-        T, A, width, height, action_success_prob, mode="simple"
-    ):
+        T,
+        A,
+        height,
+        width,
+        action_success_prob,
+        mode: TransitionMode = TransitionMode.SIMPLE,
+    ) -> None:
         def _set_probs_for_state_simple(i, action, target):
             if target == i:
                 T[action, i, i] = 1
@@ -238,8 +252,8 @@ class Experiment_2D:
                     T[action, i, i] += remaining_prob
 
         set_functions = {
-            "simple": _set_probs_for_state_simple,
-            "full": _set_probs_for_state,
+            TransitionMode.SIMPLE: _set_probs_for_state_simple,
+            TransitionMode.FULL: _set_probs_for_state,
         }
 
         assert mode in set_functions, f"Mode {mode} not supported"
@@ -251,75 +265,70 @@ class Experiment_2D:
                 target = Experiment_2D._get_target(i, action, width, height)
                 set_fun(i, action, target)
 
-    @staticmethod
-    def make_MDP_params(
-        height,
-        width,
-        action_success_prob,
-        rewards_dict,
-        gamma,
-        transition_mode="full",
-    ):
-        S = np.arange(height * width).reshape(height, width)
+    def make_MDP_params(self):
+        n_states = self.width * self.height
+        h, w = self.height, self.width
+
+        S = np.arange(n_states).reshape(h, w)
         A = np.array((0, 1, 2, 3))  # 0 is left, 1 is right, 2 is up, 3 is down
 
-        T = np.zeros((A.shape[0], height * width, height * width))
+        T = np.zeros((A.shape[0], n_states, n_states))
 
         Experiment_2D._fill_transition_matrix(
-            T, A, width, height, action_success_prob, mode=transition_mode
+            T=T,
+            A=A,
+            height=h,
+            width=w,
+            action_success_prob=self.action_success_prob,
+            mode=self.transition_mode,
         )
 
-        # make reward states absorbing
-        for idx in rewards_dict:
-            if rewards_dict[idx] > 0:
-                make_absorbing(T, idx)
-
-        # previous state, action, new state
-        R = np.zeros((width * height, 4, width * height))
-
+        # Define a helper function to assign rewards from the rewards dictionary
         def assign_reward(idx, magnitude):
             # check right border
-            if idx + 1 % width != width and idx + 1 < width * height:
+            if idx + 1 % w != w and idx + 1 < n_states:
                 R[idx + 1, 0, idx] = magnitude
             # check left border
-            if idx - 1 % width != width - 1 and idx - 1 >= 0:
+            if idx - 1 % w != w - 1 and idx - 1 >= 0:
                 R[idx - 1, 1, idx] = magnitude
             # check bottom border
-            if idx <= width * (height - 1) and idx + width < width * height:
-                R[idx + width, 2, idx] = magnitude
+            if idx <= w * (h - 1) and idx + w < n_states:
+                R[idx + w, 2, idx] = magnitude
             # check top border
-            if idx >= width and idx - width >= 0:
-                R[idx - width, 3, idx] = magnitude
+            if idx >= w and idx - w >= 0:
+                R[idx - w, 3, idx] = magnitude
 
-        for idx in rewards_dict:
-            assign_reward(idx, rewards_dict[idx])
+        # previous state, action, new state
+        R = np.zeros((n_states, 4, n_states))
 
-        return S, A, T, R, gamma
+        # Make reward states absorbing and assign rewards
+        for idx in self.rewards_dict:
+            if self.rewards_dict[idx] > 0:
+                make_absorbing(T, idx)
+            assign_reward(idx, self.rewards_dict[idx])
+
+        return S, A, T, R
+
+    def solve(self):
+        self.mdp.solve()
 
     def myopic(self, gamma):
         self.mdp.gamma = gamma
 
     def confident(self, action_success_prob):
         # probability is LOWER than the "true": UNDERCONFIDENT
-        S, A, T, R, gamma = self.make_MDP_params(
-            self.height,
-            self.width,
-            action_success_prob,
-            self.rewards_dict,
-            self.gamma,
-        )
-        self.mdp = MDP_2D(S, A, T, R, gamma)
+        self.action_success_prob = action_success_prob
+        S, A, T, R = self.make_MDP_params()
+        self.mdp = MDP_2D(S, A, T, R, self.gamma)
 
-    def pessimistic(self, scaling, new_gamma=None, transition_mode="simple"):
-        mdp = self.mdp
-        S, A, T, R, gamma = self.make_MDP_params(
-            mdp.height,
-            mdp.width,
-            self.action_success_prob,
-            self.rewards_dict,
-            mdp.gamma,
-            transition_mode=transition_mode,
-        )
+    def pessimistic(
+        self,
+        scaling,
+        new_gamma=None,
+        transition_mode: TransitionMode = TransitionMode.SIMPLE,
+    ):
+        self.transition_mode = transition_mode
+        S, A, T, R = self.make_MDP_params()
 
         # Change the transition probabilities to be more pessimistic
         neg_rew_idx = [idx for idx in self.rewards_dict if self.rewards_dict[idx] < 0]
@@ -328,6 +337,35 @@ class Experiment_2D:
         T /= T.sum(axis=2, keepdims=True)
 
         if new_gamma is not None:
-            gamma = new_gamma
+            self.gamma = new_gamma
 
-        self.mdp = MDP_2D(S, A, T, R, gamma)
+        self.mdp = MDP_2D(S, A, T, R, self.gamma)
+
+    def set_user_params(
+        self,
+        prob: float,
+        gamma: float,
+        transition_func: Callable[..., np.ndarray],
+        use_pessimistic: bool = False,
+    ) -> MDP_2D:
+        """
+        For now, prob can serve as both:
+        - 1. The normal notion of probability of success
+        - 2. The scaling factor for pessimistic transitions
+
+        (Hopefully, better ways to do this will be implemented in the future)
+        """
+        self.gamma = gamma
+
+        if not use_pessimistic:
+            self.action_success_prob = prob
+
+        S, A, T, R = self.make_MDP_params()
+        T = transition_func(T, height=self.height, width=self.width)
+
+        if use_pessimistic:
+            T = apply_pessimism_to_transition(T, self.rewards_dict, prob)
+
+        self.mdp = MDP_2D(S, A, T, R, self.gamma)
+
+        return self.mdp
