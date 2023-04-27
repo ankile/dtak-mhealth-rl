@@ -45,8 +45,6 @@ if __name__ == "__main__":
     granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
-    scalers, probs = None, None
-    # scalers = 2 ** np.linspace(-1, 5, granularity)
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
@@ -74,6 +72,5 @@ if __name__ == "__main__":
         granularity=granularity,
         gammas=gammas,
         probs=probs,
-        scalers=scalers,
         run_parallel=run_parallel,
     )
