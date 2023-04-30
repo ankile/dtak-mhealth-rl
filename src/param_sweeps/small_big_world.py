@@ -32,14 +32,14 @@ if __name__ == "__main__":
 
     # Setting the parameters
     default_params = dict(
-        height=5,
-        width=5,
+        height=7,
+        width=7,
         big_reward=300,
         small_reward_frac=0.5,
     )
 
     # Set the number of subplots per row
-    cols = 5  # 5, 7, 9
+    cols = 9  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20

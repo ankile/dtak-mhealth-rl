@@ -171,14 +171,6 @@ def run_param_sweep(
         )
     print(f"Finished in {datetime.now() - start}")
 
-    partial_strategy_heatmap = partial(
-        make_general_strategy_heatmap,
-        gammas=gammas,
-        annot=False,
-        ax_labels=False,
-        num_ticks=10,
-    )
-
     # Create the figure and axes to plot on
     fig, axs = plt.subplots(
         nrows=rows,
@@ -192,12 +184,16 @@ def run_param_sweep(
     for (data, p2idx, param, value, realized_probs), ax in zip(
         strategy_data, axs.flatten()
     ):
-        partial_strategy_heatmap(
+        make_general_strategy_heatmap(
             results=data,
             probs=realized_probs,
             p2idx=p2idx,
             title=f"{param}={value:.2f}",
             ax=ax,
+            gammas=gammas,
+            annot=False,
+            ax_labels=False,
+            num_ticks=10,
         )
 
     # Shoow the full plot at the end

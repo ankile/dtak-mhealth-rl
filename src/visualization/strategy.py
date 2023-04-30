@@ -5,6 +5,7 @@ import seaborn as sns
 
 
 def make_general_strategy_heatmap(
+    *,
     results,
     probs,
     gammas,
