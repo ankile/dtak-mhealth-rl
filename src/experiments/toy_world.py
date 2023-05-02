@@ -197,8 +197,8 @@ if __name__ == "__main__":
 
 # ultimate goal:
 # in this type of world, you can tell the difference between these types of world
-# set up another world, and take the same character sand differentiate AB whereas other world AB look the same
+# set up another world, and take the same characters and differentiate AB whereas other world AB look the same
 
 
-# what world will allow me to differentiate the characters at all
+# What world will allow me to differentiate the characters at all
 # go more and more extreme

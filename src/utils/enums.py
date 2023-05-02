@@ -2,7 +2,7 @@
 from enum import Enum
 
 
-class Actions(Enum):
+class Action(Enum):
     """Action types for the agent"""
 
     LEFT = 0

@@ -2,10 +2,16 @@ import numpy as np
 
 from src.utils.cliff import make_cliff_transition, make_cliff_experiment
 from src.utils.param_sweep import run_param_sweep
+from src.utils.enums import Action
 
 
 def get_start_state(height, width):
     return (height - 1) * width
+
+
+def get_realized_probs_indices(height, width):
+    # Probability of going up from the bottom left corner
+    return [Action.UP.value, (height - 1) * width, (height - 2) * width]
 
 
 if __name__ == "__main__":
@@ -30,10 +36,12 @@ if __name__ == "__main__":
     cols = 8  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 50  # 5, 10, 20
+    granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
-    probs = np.linspace(0.3, 0.99, granularity)
+    scalers, probs = None, None
+    scalers = 2 ** np.linspace(-1, 5, granularity)
+    # probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
@@ -63,6 +71,8 @@ if __name__ == "__main__":
         get_start_state=get_start_state,
         granularity=granularity,
         probs=probs,
+        scalers=scalers,
+        get_realized_probs_indices=get_realized_probs_indices,
         gammas=gammas,
         run_parallel=run_parallel,
     )

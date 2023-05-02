@@ -156,6 +156,6 @@ if __name__ == "__main__":
     axes[0].set_ylabel("y")
 
     # Save figure
-    fig.savefig("images/three_worlds.png", bbox_inches="tight")
+    fig.savefig("images/plots/three_worlds.png", bbox_inches="tight")
 
     plt.show()
