@@ -15,6 +15,8 @@ def make_general_strategy_heatmap(
     annot=True,
     ax_labels=True,
     num_ticks=10,
+    title_fontsize=8,
+    legend_fontsize=5,
 ) -> None:
     make_strategy_heatmap(
         results,
@@ -25,6 +27,7 @@ def make_general_strategy_heatmap(
         annot=annot,
         ax_labels=ax_labels,
         num_ticks=num_ticks,
+        title_fontsize=title_fontsize,
     )
 
     # Obtain the colormap
@@ -35,7 +38,7 @@ def make_general_strategy_heatmap(
         mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()  # type: ignore
     ]
 
-    ax.legend(handles=legend_patches, loc="upper left", fontsize=5)
+    ax.legend(handles=legend_patches, loc="upper left", fontsize=legend_fontsize)
 
 
 def make_strategy_heatmap(
@@ -47,6 +50,7 @@ def make_strategy_heatmap(
     annot=True,
     ax_labels=True,
     num_ticks=10,
+    title_fontsize=8,
 ) -> None:
     # compute the indices to use for the tick labels
     gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
@@ -57,7 +61,17 @@ def make_strategy_heatmap(
     prob_ticks = [round(probs[i], 2) for i in prob_indices]
 
     # plot the heatmap
-    sns.heatmap(results, annot=annot, cmap="Blues", fmt="d", ax=ax, cbar=False)
+    sns.heatmap(
+        results,
+        annot=annot,
+        cmap="Blues",
+        fmt="d",
+        ax=ax,
+        cbar=False,
+        square=True,
+        vmin=-1,
+        vmax=np.max(results),
+    )
 
     # set the tick labels and positions
     ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
@@ -73,7 +87,7 @@ def make_strategy_heatmap(
         ax.set_ylabel("Confidence")
 
     if title:
-        ax.set_title(title, size=8)
+        ax.set_title(title, size=title_fontsize)
 
     return ax
 

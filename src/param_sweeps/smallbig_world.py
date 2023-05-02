@@ -8,6 +8,15 @@ def get_start_state(height, width):
     return 0
 
 
+# Setting the parameters
+default_params = dict(
+    height=7,
+    width=7,
+    big_reward=300,
+    small_reward_frac=0.5,
+)
+
+
 if __name__ == "__main__":
     """
     This world includes a small and a big reward where the small reward is closer to the start state.
@@ -29,14 +38,6 @@ if __name__ == "__main__":
     setup_name = "Small and Big Reward World"
 
     run_parallel = True
-
-    # Setting the parameters
-    default_params = dict(
-        height=7,
-        width=7,
-        big_reward=300,
-        small_reward_frac=0.5,
-    )
 
     # Set the number of subplots per row
     cols = 9  # 5, 7, 9

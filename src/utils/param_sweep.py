@@ -1,10 +1,11 @@
+from collections import namedtuple
 import itertools
 import os
 import pickle
 from datetime import datetime
 from functools import partial
 from multiprocessing import Pool
-from typing import Callable, Tuple, cast
+from typing import Callable, Dict, Tuple, cast
 import multiprocessing
 from contextlib import AbstractContextManager
 from typing import Callable, Any
@@ -18,6 +19,8 @@ from src.utils.policy import follow_policy, get_all_absorbing_states, param_gene
 from src.visualization.strategy import make_general_strategy_heatmap
 from src.worlds.mdp2d import Experiment_2D
 
+ExperimentResult = namedtuple("ExperimentResult", ["data", "p2idx", "probs"])
+
 
 def run_experiment(
     experiment: Experiment_2D,
@@ -27,12 +30,29 @@ def run_experiment(
     probs: np.ndarray,
     start_state: int,
     realized_probs_indices: list | None = None,
-):
-    data = np.zeros((len(probs), len(gammas)), dtype=int)
-    policies = {}
-    p2idx = {}
+) -> ExperimentResult:
+    """
+    Run an experiment with a given set of parameters and return the results.
 
-    realized_probs = np.zeros_like(probs)
+    The results are:
+    - data: a matrix of shape (len(probs), len(gammas)) where each entry is an index
+            into the list of policies
+    - p2idx: a dictionary mapping policies to indices
+    - realized_probs: a matrix of shape (len(probs), len(gammas)) where each entry is
+                        the realized probability of transitioning to the next state,
+                        i.e., the probability of the transition that actually occurs
+                        under the given definition of underconfidence (underconfidence/pessimism)
+
+    If vanilla underconfidence or pessimism is used is implicitly determined by whether
+    `realized_probs_indices` is None or a function that determines what entry in `T` to
+    use as the realized probability.
+    """
+
+    data = np.zeros((len(probs), len(gammas)), dtype=np.int32)
+    policies = {}
+    p2idx: Dict[str, int] = {}
+
+    realized_probs = np.zeros(probs.shape)
 
     terminal = get_all_absorbing_states(experiment.mdp)
 
@@ -72,7 +92,7 @@ def run_experiment(
         else:
             realized_probs[i] = prob
 
-    return data, p2idx, realized_probs
+    return ExperimentResult(data, p2idx, realized_probs)
 
 
 def run_one_world(
@@ -89,16 +109,15 @@ def run_one_world(
     param, value = param_value
     params = {**default_params, param: value}
     experiment: Experiment_2D = create_experiment_func(**params)
+    h, w = params["height"], params["width"]
     data, p2idx, realized_probs = run_experiment(
         experiment,
         transition_matrix_func,
         params,
         gammas,
         probs,
-        start_state=get_start_state(params["height"], params["width"]),
-        realized_probs_indices=get_realized_probs_indices(
-            params["height"], params["width"]
-        )
+        start_state=get_start_state(h, w),
+        realized_probs_indices=get_realized_probs_indices(h, w)
         if get_realized_probs_indices is not None
         else None,
     )

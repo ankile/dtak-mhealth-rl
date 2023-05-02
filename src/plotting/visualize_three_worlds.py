@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from src.plotting.config import FIG_FULL_SIZE, FIG_TITLE_FONT_SIZE
 
 # Import functions to create the gridworlds
 from src.utils.wall import make_wall_experiment
@@ -33,12 +34,18 @@ def make_three_world_rewards(
     """
     Create the three gridworlds for the paper.
     """
+    wall, cliff, smallbig = make_three_worlds(height, width)
+
+    return tuple(map(get_reward, (wall, cliff, smallbig)))
+
+
+def make_three_worlds(height, width):
     wall = make_wall_experiment(
         height,
         width,
         reward_mag=100,
         neg_mag=-10,
-        latent_cost=-0,
+        latent_cost=0,
     )
 
     cliff = make_cliff_experiment(
@@ -55,7 +62,7 @@ def make_three_world_rewards(
         small_reward_frac=0.5,
     )
 
-    return tuple(map(get_reward, (wall, cliff, smallbig)))
+    return wall, cliff, smallbig
 
 
 def relative_luminance(rgb: tuple) -> float:
@@ -144,13 +151,13 @@ if __name__ == "__main__":
         width=width,
     )
 
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True, sharex=True)
+    fig, axes = plt.subplots(1, 3, figsize=FIG_FULL_SIZE, sharey=True, sharex=True)
 
     for ax, reward, world_name, start, goals in zip(
         axes, rewards, world_names, world_starts, world_goals
     ):
         make_reward_heatmap(reward, ax, start, goals)
-        ax.set_title(world_name, fontsize=16)
+        ax.set_title(world_name, fontsize=FIG_TITLE_FONT_SIZE)
 
     fig.tight_layout()
     axes[0].set_ylabel("y")

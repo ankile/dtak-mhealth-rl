@@ -14,26 +14,27 @@ def get_realized_probs_indices(height, width):
     return [Action.UP.value, (height - 1) * width, (height - 2) * width]
 
 
+default_params = {
+    "height": 5,
+    "width": 9,
+    "reward_mag": 1e2,
+    "small_r_mag": 0,
+    "neg_mag": -1e8,
+    "latent_reward": 0,
+    # These are off by default because they turn the world into a compound world
+    "disengage_reward": 0,
+    "allow_disengage": False,
+}
+
+
 if __name__ == "__main__":
     # === Start of setup === #
     setup_name = "Cliff World Param Viz"
 
     run_parallel = True
 
-    default_params = {
-        "height": 5,
-        "width": 9,
-        "reward_mag": 1e2,
-        "small_r_mag": 0,
-        "neg_mag": -1e8,
-        "latent_reward": 0,
-        # These are off by default because they turn the world into a compound world
-        "disengage_reward": 0,
-        "allow_disengage": False,
-    }
-
     # Set the number of subplots per row
-    cols = 8  # 5, 7, 9
+    cols = 7  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20

@@ -12,20 +12,21 @@ def get_realized_probs_indices(height, width):
     return [1, width - 2, width - 1]
 
 
+# Setting the parameters
+default_params = dict(
+    height=5,
+    width=6,
+    neg_mag=-10,
+    latent_cost=0,
+    reward_mag=300,
+)
+
+
 if __name__ == "__main__":
     # === Set up the experiment === #
     setup_name = "Pessimist Wall World"
 
     run_parallel = True
-
-    # Setting the parameters
-    default_params = dict(
-        height=5,
-        width=6,
-        neg_mag=-10,
-        latent_cost=0,
-        reward_mag=300,
-    )
 
     # Set the number of subplots per row
     cols = 5  # 5, 7, 9
