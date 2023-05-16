@@ -1,10 +1,12 @@
 # Standard imports
+from typing import Dict
 import numpy as np
 import matplotlib.pyplot as plt
 from src.plotting.config import FIG_FULL_SIZE, FIG_TITLE_FONT_SIZE
 
 # Import function from `param_sweep.py` to run one experiment
-from src.utils.param_sweep import run_experiment
+from src.utils.param_sweep import ExperimentResult, run_experiment
+from src.utils.pessimism import scale_from_pessimism
 from src.utils.small_big import make_smallbig_experiment
 from src.utils.transition_matrix import id_func
 
@@ -105,23 +107,23 @@ if __name__ == "__main__":
 
     # Set up the parameters for the parameter sweep
     granularity = 30
-    probs = np.linspace(0.4, 0.999, granularity)
-    gammas = np.linspace(0.4, 0.999, granularity)
-    scalers = 2 ** np.linspace(-1, 5, granularity)
+    probs = np.linspace(0.3, 0.999, granularity)
+    gammas = np.linspace(0.4, 0.99, granularity)
+    scalers = 2 ** np.linspace(4.2, -2.5, granularity)
 
     # Run the experiment for each gridworld
-    results = {}
+    results: Dict[str, ExperimentResult] = {}
 
-    print("Running experiments...", end=" ")
+    print("Running experiments...")
     results["Wall"] = run_wall(wall, gammas, scalers)
-    print("Wall done. ", end=" ")
+    print("Wall done.")
     results["Cliff"] = run_cliff(cliff, gammas, probs)
-    print("Cliff done. ", end=" ")
+    print("Cliff done.")
     results["Smallbig"] = run_smallbig(smallbig, gammas, probs)
     print("Smallbig done.")
 
     # Plot the dataframes
-    fig, axes = plt.subplots(1, 3, figsize=FIG_FULL_SIZE, sharey=True, sharex=True)
+    fig, axes = plt.subplots(1, 3, figsize=FIG_FULL_SIZE, sharey=not True, sharex=True)
     for ax, (name, exp_res), letter in zip(
         axes, results.items(), ["(a)", "(b)", "(c)"]
     ):
