@@ -41,8 +41,8 @@ if __name__ == "__main__":
 
     # Set up parameters to search over
     scalers, probs = None, None
-    scalers = 2 ** np.linspace(-1, 5, granularity)
-    # probs = np.linspace(0.4, 0.99, granularity)
+    # scalers = 2 ** np.linspace(-1, 5, granularity)
+    probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         granularity=granularity,
         probs=probs,
         scalers=scalers,
-        get_realized_probs_indices=get_realized_probs_indices,
+        # get_realized_probs_indices=get_realized_probs_indices,
         gammas=gammas,
         run_parallel=run_parallel,
     )

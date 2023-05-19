@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "length": np.arange(3, 3+cols, cols),
+        "length": np.arange(3, 3 + cols, cols),
         "small_reward_frac": np.linspace(0.01, 0.5, cols),
     }
 
