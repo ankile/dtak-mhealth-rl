@@ -28,6 +28,7 @@ def run_experiment(
     probs: np.ndarray,
     start_state: int,
     realized_probs_indices: list | None = None,
+    goal_states: set | None = None,
 ) -> ExperimentResult:
     """
     Run an experiment with a given set of parameters and return the results.
@@ -51,8 +52,8 @@ def run_experiment(
     p2idx: Dict[str, int] = {}
 
     realized_probs = np.zeros(probs.shape)
-
-    terminal = get_all_absorbing_states(experiment.mdp)
+    if goal_states is None:
+        goal_states = get_all_absorbing_states(experiment.mdp)
 
     for (i, prob), (j, gamma) in itertools.product(enumerate(probs), enumerate(gammas)):
         experiment.set_user_params(
@@ -75,7 +76,7 @@ def run_experiment(
             height=params["height"],
             width=params["width"],
             initial_state=start_state,
-            goal_states=terminal,
+            goal_states=goal_states,
         )
 
         policies[(prob, gamma)] = policy_str
@@ -103,11 +104,21 @@ def run_one_world(
     gammas: np.ndarray,
     get_start_state: Callable[[int, int], int],
     get_realized_probs_indices: Callable[[int, int], list] | None = None,
+    get_goal_states: Callable[[int, int], set] | None = None,
 ):
     param, value = param_value
     params = {**default_params, param: value}
     experiment: Experiment_2D = create_experiment_func(**params)
     h, w = params["height"], params["width"]
+
+    realized_probs_indices = (
+        get_realized_probs_indices(h, w)
+        if get_realized_probs_indices is not None
+        else None
+    )
+
+    goal_states = get_goal_states(h, w) if get_goal_states is not None else None
+
     data, p2idx, realized_probs = run_experiment(
         experiment,
         transition_matrix_func,
@@ -115,9 +126,8 @@ def run_one_world(
         gammas,
         probs,
         start_state=get_start_state(h, w),
-        realized_probs_indices=get_realized_probs_indices(h, w)
-        if get_realized_probs_indices is not None
-        else None,
+        realized_probs_indices=realized_probs_indices,
+        goal_states=goal_states,
     )
     return data, p2idx, param, value, realized_probs
 
@@ -146,6 +156,7 @@ def run_param_sweep(
     probs=None,
     scalers=None,  # When this is defined, that means we are using the scaled version, i.e., pessimism
     get_realized_probs_indices: Callable | None = None,
+    get_goal_states: Callable | None = None,
     run_parallel=False,
 ):
     assert not (
@@ -172,6 +183,7 @@ def run_param_sweep(
         gammas=gammas,
         get_start_state=get_start_state,
         get_realized_probs_indices=get_realized_probs_indices,
+        get_goal_states=get_goal_states,
     )
 
     n_processes = (os.cpu_count() if run_parallel else 1) or 1
