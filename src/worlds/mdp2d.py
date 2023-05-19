@@ -305,6 +305,7 @@ class Experiment_2D:
         for idx in self.rewards_dict:
             if self.rewards_dict[idx] > 0:
                 make_absorbing(T, idx)
+
             assign_reward(idx, self.rewards_dict[idx])
 
         return S, A, T, R
@@ -361,7 +362,7 @@ class Experiment_2D:
             self.action_success_prob = prob
 
         S, A, T, R = self.make_MDP_params()
-        T = transition_func(T, height=self.height, width=self.width)
+        T = transition_func(T, height=self.height, width=self.width, prob=prob)
 
         if use_pessimistic:
             T = apply_pessimism_to_transition(T, self.rewards_dict, prob)
