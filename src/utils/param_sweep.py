@@ -156,7 +156,7 @@ def run_param_sweep(
     probs=None,
     scalers=None,  # When this is defined, that means we are using the scaled version, i.e., pessimism
     get_realized_probs_indices: Callable | None = None,
-    get_goal_states: Callable | None = None,
+    get_goal_states: Callable[[int, int], set] | None = None,
     run_parallel=False,
 ):
     assert not (

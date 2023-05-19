@@ -8,6 +8,15 @@ from src.visualization.worldviz import plot_world_reward
 from src.worlds.mdp1d import Experiment_1D
 
 
+def get_goal_states(h, w) -> set:
+    """
+    Returns a list of goal states for a gridworld of size (h, w).
+    """
+    goal_states = {0, w - 1}
+
+    return goal_states
+
+
 def riverswim_reward(
     length: int,
     big_r,
@@ -24,7 +33,7 @@ def riverswim_reward(
 
     :param x: length of river swim
     :param R: big reward on right
-    :param r: small reward on left 
+    :param r: small reward on left
     :param latent_reward: latent cost
     :param T: the transition matrix
     :param allow_disengage: whether to allow the agent to disengage in the world (not applicable here)
@@ -35,36 +44,42 @@ def riverswim_reward(
     reward_dict = {}
     for i in range(length):
         reward_dict[i] = latent_reward  # add latent cost
-    
+
     # set rewards/goal states
     reward_dict[0] = small_r
-    reward_dict[length-1] = big_r
+    reward_dict[length - 1] = big_r
 
     return reward_dict
+
 
 def make_riverswim_transition(T, length, prob, allow_disengage=False) -> np.ndarray:
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((2, length, length)) # reset
+    T_new = np.zeros((2, length, length))  # reset
 
     # left and right should be absorbing states automatically, but just in case
     make_absorbing(T_new, 0)
-    make_absorbing(T_new, length-1)
+    make_absorbing(T_new, length - 1)
 
     # set left behavior (0): deterministic
     T_new[0, 0, 0] = T_new[-1, -1, -1] = 1
-    for row in range(1, length-1):
-        T_new[0, row, row-1] = 1
+    for row in range(1, length - 1):
+        T_new[0, row, row - 1] = 1
 
     # set right behavior (1): based on the confidence
     T_new[1, 0, 0] = T_new[-1, -1, -1] = 1
-    for row in range(1, length-1):
-        T_new[1, row, row-1] = 0.05 # can change this based on confidence; not sure yet
+    for row in range(1, length - 1):
+        T_new[
+            1, row, row - 1
+        ] = 0.05  # can change this based on confidence; not sure yet
         T_new[1, row, row] = 0.8 * prob
-        T_new[1, row, row+1] = 1 - 0.05 - 0.8 * prob # again, this formula is quite rough
+        T_new[1, row, row + 1] = (
+            1 - 0.05 - 0.8 * prob
+        )  # again, this formula is quite rough
 
     return T_new
+
 
 def make_riverswim_experiment(
     length: int,
@@ -73,7 +88,6 @@ def make_riverswim_experiment(
     small_r,
     latent_reward=0,
 ) -> Experiment_1D:
-
     riverswim_dict = riverswim_reward(
         length=length,
         big_r=big_r,
