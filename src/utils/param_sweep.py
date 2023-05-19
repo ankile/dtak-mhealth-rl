@@ -4,11 +4,9 @@ import os
 import pickle
 from datetime import datetime
 from functools import partial
-from multiprocessing import Pool
+
 from typing import Callable, Dict, Tuple, cast
-import multiprocessing
-from contextlib import AbstractContextManager
-from typing import Callable, Any
+from typing import Callable
 
 import numpy as np
 from matplotlib import pyplot as plt
