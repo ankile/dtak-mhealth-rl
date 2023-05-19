@@ -1,13 +1,15 @@
 from src.worlds.mdp2d import MDP_2D
 
 
-def follow_policy(policy, height, width, initial_state, terminal_states):
+def follow_policy(policy, height, width, initial_state, goal_states):
     action_dict = {0: "L", 1: "R", 2: "U", 3: "D"}
     state = initial_state
     actions_taken = []
     seen_states = set()
 
-    while state not in terminal_states and state not in seen_states:
+    while len(seen_states) == 0 or (
+        state not in goal_states and state not in seen_states
+    ):
         seen_states.add(state)
         row, col = state // width, state % width
         action = policy[row, col]

@@ -75,7 +75,7 @@ def run_experiment(
             height=params["height"],
             width=params["width"],
             initial_state=start_state,
-            terminal_states=terminal,
+            goal_states=terminal,
         )
 
         policies[(prob, gamma)] = policy_str
