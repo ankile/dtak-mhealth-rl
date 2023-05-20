@@ -1,16 +1,17 @@
 import numpy as np
 from src.utils.param_sweep import run_param_sweep
-from src.utils.transition_matrix import id_func
-from src.utils.riverswim import make_riverswim_experiment
+from src.utils.riverswim import make_riverswim_experiment, make_riverswim_transition
 
 
-def get_start_state(length):
+def get_start_state(height, width):
     return 1
 
 
 # Setting the parameters
 default_params = dict(
-    length=5,
+    height=5,
+    width=3,
+    prob = 0.7,
     big_r=1,
     small_r=0.01,
 )
@@ -41,7 +42,7 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "length": np.arange(3, 3 + cols, cols),
+        "width": np.arange(3, 3 + cols, cols),
         "small_reward_frac": np.linspace(0.01, 0.5, cols),
     }
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         default_params=default_params,
         search_parameters=search_parameters,
         create_experiment_func=make_riverswim_experiment,
-        transition_matrix_func=id_func,
+        transition_matrix_func=make_riverswim_transition,
         rows=rows,
         cols=cols,
         get_start_state=get_start_state,

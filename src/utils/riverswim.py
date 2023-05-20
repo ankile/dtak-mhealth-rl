@@ -1,11 +1,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
-from enums import TransitionMode
+from src.utils.enums import TransitionMode
 
-from transition_matrix import make_absorbing
+from src.utils.transition_matrix import make_absorbing
 from src.visualization.worldviz import plot_world_reward
-from src.worlds.mdp1d import Experiment_1D
+from src.worlds.mdp2d import Experiment_2D
 
 
 def get_goal_states(h, w) -> set:
@@ -18,7 +18,8 @@ def get_goal_states(h, w) -> set:
 
 
 def riverswim_reward(
-    length: int,
+    height,
+    width,
     big_r,
     small_r,
     latent_reward=0,
@@ -42,62 +43,62 @@ def riverswim_reward(
     """
     # Create the reward dictionary
     reward_dict = {}
-    for i in range(length):
+    for i in range(width):
         reward_dict[i] = latent_reward  # add latent cost
 
     # set rewards/goal states
     reward_dict[0] = small_r
-    reward_dict[length - 1] = big_r
+    reward_dict[width - 1] = big_r
 
     return reward_dict
 
-
-def make_riverswim_transition(T, length, prob, allow_disengage=False) -> np.ndarray:
+def make_riverswim_transition(T, height, width, prob, allow_disengage=False) -> np.ndarray:
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((2, length, length))  # reset
-
-    # left and right should be absorbing states automatically, but just in case
-    make_absorbing(T_new, 0)
-    make_absorbing(T_new, length - 1)
+    T_new = np.zeros((2, width, width)) # reset transition matrix, which also removes absorbing states
 
     # set left behavior (0): deterministic
-    T_new[0, 0, 0] = T_new[-1, -1, -1] = 1
-    for row in range(1, length - 1):
-        T_new[0, row, row - 1] = 1
+    T_new[0, 0, 0] = 1
+    for row in range(1, width):
+        T_new[0, row, row-1] = 1
 
     # set right behavior (1): based on the confidence
-    T_new[1, 0, 0] = T_new[-1, -1, -1] = 1
-    for row in range(1, length - 1):
-        T_new[
-            1, row, row - 1
-        ] = 0.05  # can change this based on confidence; not sure yet
-        T_new[1, row, row] = 0.8 * prob
-        T_new[1, row, row + 1] = (
-            1 - 0.05 - 0.8 * prob
-        )  # again, this formula is quite rough
+    # set first row
+    T_new[1, 0, 0] = 1 - prob
+    T_new[1, 0, 1] = prob
 
+    left_stay_ratio = 1/13 # can vary this ratio, but for now it's stuck at 1/13
+
+    for row in range(1, width-1): # set the rows in between
+        T_new[1, row, row+1] = prob # intended action prob = confidence
+        T_new[1, row, row-1] = left_stay_ratio * (1-prob) # left action prob = ratio * (1-confidence)
+        T_new[1, row, row] = (1 - left_stay_ratio) * (1-prob) # right action prob = 1 - intended - left
+
+    # set last row
+    T_new[1, width-1, width-2] = 1 - prob
+    T_new[1, width-1, width-2] = prob
     return T_new
 
-
 def make_riverswim_experiment(
-    length: int,
+    height,
+    width,
     prob,
     big_r,
     small_r,
     latent_reward=0,
-) -> Experiment_1D:
+) -> Experiment_2D:
     riverswim_dict = riverswim_reward(
-        length=length,
+        height=height,
+        width=width,
         big_r=big_r,
         small_r=small_r,
         latent_reward=latent_reward,
     )
 
-    experiment = Experiment_1D(
-        height=1,
-        width=length,
+    experiment = Experiment_2D(
+        height=height,
+        width=width,
         rewards_dict=riverswim_dict,
         transition_mode=TransitionMode.FULL,
     )
@@ -105,7 +106,7 @@ def make_riverswim_experiment(
     T_new = make_riverswim_transition(
         T=experiment.mdp.T,
         height=1,
-        width=length,
+        width=width,
         prob=prob,
     )
 
@@ -118,9 +119,10 @@ if __name__ == "__main__":
     params = {
         "prob": 0.72,
         "gamma": 0.89,
-        "length": 3,
+        "height": 1,
+        "width": 5,
         "big_r": 1,
-        "small_r": 0.01,  # small_mag of 0 = normal cliff world
+        "small_r": 0.01,
         "latent_reward": 0,
         "disengage_reward": None,
         "allow_disengage": False,
