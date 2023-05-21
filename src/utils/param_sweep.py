@@ -59,6 +59,7 @@ def run_experiment(
         experiment.set_user_params(
             prob=prob,
             gamma=gamma,
+            params=params,
             transition_func=transition_matrix_func,
             use_pessimistic=realized_probs_indices is not None,
         )
@@ -73,8 +74,8 @@ def run_experiment(
 
         policy_str = follow_policy(
             experiment.mdp.policy,
-            height=params["height"],
-            width=params["width"],
+            height=experiment.height,
+            width=experiment.width,
             initial_state=start_state,
             goal_states=goal_states,
         )
@@ -109,7 +110,7 @@ def run_one_world(
     param, value = param_value
     params = {**default_params, param: value}
     experiment: Experiment_2D = create_experiment_func(**params)
-    h, w = params["height"], params["width"]
+    h, w = experiment.height, experiment.width
 
     realized_probs_indices = (
         get_realized_probs_indices(h, w)
@@ -204,7 +205,7 @@ def run_param_sweep(
     fig, axs = plt.subplots(
         nrows=rows,
         ncols=cols,
-        figsize=(round(2.5 * cols), round(2.5 * rows)),
+        figsize=(round(2 * cols), round(2 * rows)),
         sharex=True,
         sharey=True,
     )

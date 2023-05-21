@@ -41,7 +41,7 @@ def make_wall_experiment(
     width,
     neg_mag,
     reward_mag,
-    latent_cost,
+    latent_cost=0,
 ) -> Experiment_2D:
     wall_dict = wall_reward(
         height,
