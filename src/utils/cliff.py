@@ -60,7 +60,9 @@ def cliff_reward(
     return reward_dict
 
 
-def make_cliff_transition(T, height, width, allow_disengage=False) -> np.ndarray:
+def make_cliff_transition(
+    T, height, width, prob=None, allow_disengage=False
+) -> np.ndarray:
     """
     Makes the cliff absorbing.
     """
