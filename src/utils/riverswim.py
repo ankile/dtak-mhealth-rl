@@ -20,9 +20,9 @@ def get_goal_states(h, w) -> set:
 def riverswim_reward(
     height,
     width,
+    prob,
     big_r,
     small_r,
-    latent_reward=0,
 ) -> dict:
     """
     Creates a cliff on the bottom of the gridworld.
@@ -44,7 +44,7 @@ def riverswim_reward(
     # Create the reward dictionary
     reward_dict = {}
     for i in range(width):
-        reward_dict[i] = latent_reward  # add latent cost
+        reward_dict[i] = 0  # add latent cost
 
     # set rewards/goal states
     reward_dict[0] = small_r
@@ -56,7 +56,7 @@ def make_riverswim_transition(T, height, width, prob, allow_disengage=False) -> 
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((2, width, width)) # reset transition matrix, which also removes absorbing states
+    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
 
     # set left behavior (0): deterministic
     T_new[0, 0, 0] = 1
@@ -77,7 +77,12 @@ def make_riverswim_transition(T, height, width, prob, allow_disengage=False) -> 
 
     # set last row
     T_new[1, width-1, width-2] = 1 - prob
-    T_new[1, width-1, width-2] = prob
+    T_new[1, width-1, width-1] = prob
+
+    # set up and down behavior (2, 3): deterministic
+    for row in range(width):
+        T_new[2, row, row] = 1
+        T_new[3, row, row] = 1
     return T_new
 
 def make_riverswim_experiment(
@@ -86,14 +91,13 @@ def make_riverswim_experiment(
     prob,
     big_r,
     small_r,
-    latent_reward=0,
 ) -> Experiment_2D:
     riverswim_dict = riverswim_reward(
         height=height,
         width=width,
+        prob=prob,
         big_r=big_r,
         small_r=small_r,
-        latent_reward=latent_reward,
     )
 
     experiment = Experiment_2D(

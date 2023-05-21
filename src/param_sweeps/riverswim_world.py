@@ -4,16 +4,16 @@ from src.utils.riverswim import make_riverswim_experiment, make_riverswim_transi
 
 
 def get_start_state(height, width):
-    return 1
+    return 0
 
 
 # Setting the parameters
 default_params = dict(
-    height=5,
-    width=3,
-    prob = 0.7,
+    height=1,
+    width=7,
+    prob=0.7,
     big_r=1,
-    small_r=0.01,
+    small_r=0.2,
 )
 
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "width": np.arange(3, 3 + cols, cols),
-        "small_reward_frac": np.linspace(0.01, 0.5, cols),
+        "width": np.arange(3, 3 + cols, 1),
+        "big_r": np.arange(1, 1+cols, 1),
     }
 
     rows = len(search_parameters)
