@@ -10,116 +10,136 @@ from src.worlds.mdp2d import Experiment_2D
 
 def chain_reward(
     length: int,
-    s,
-    d,
-    latent_reward=0,
-    allow_disengage=False,
-    disengage_reward=0,
+    goal_mag: float,
+    disengage_reward: float,
+    burden: float,
 ) -> dict:
     """
-    Creates a cliff on the bottom of the gridworld.
-    The start state is the bottom left corner.
-    The goal state is the bottom right corner.
-    Every cell in the bottom row except the goal and start state is a cliff.
+    Creates a chain of states with a goal state at the end.
+    The start state is the first state.
+    The goal state is the last state.
+    The agent needs to walk through the chain to reach the goal.
 
-    The agent needs to walk around the cliff to reach the goal.
+    At every state, the agent receives a burden cost.
+    Below every state in the chain is a disengage state with a disengage reward.
 
-    :param x: width of the gridworld
-    :param y: height of the gridworld
-    :param d: reward for reaching the goal
-    :param c: latent cost
-    :param T: the transition matrix
-    :param s: cost of falling off the cliff
-    :param allow_disengage: whether to allow the agent to disengage in the world
+    :param length: length of the chain
+    :param goal_mag: reward for reaching the goal
+    :param disengage_mag: reward for disengaging
+    :param burden: cost of staying in a state
 
-    returns a dictionary of rewards for each state in the gridworld.
+    returns a dictionary of rewards for each state in the chain.
     """
+
     # Create the reward dictionary
     reward_dict = {}
-    for i in range(x * y):
-        reward_dict[i] = latent_reward  # add latent cost
-
-    # Define the world boundaries
-    cliff_begin_x = 1
-    cliff_end_x = x - 1
-    cliff_y = y - (1 + int(allow_disengage))
+    for i in range(length):
+        reward_dict[i] = burden  # add burden cost
 
     # Set the goal state
-    reward_dict[x * cliff_y + x - 1] = d
-
-    # Set the cliff states
-    for i in range(cliff_begin_x, cliff_end_x):
-        reward_dict[x * cliff_y + i] = s
+    reward_dict[length - 1] = goal_mag
 
     # Set the disengage states
-    if allow_disengage:
-        for i in range(0, x):
-            reward_dict[x * (y - 1) + i] = disengage_reward
+    for i in range(0, length):
+        reward_dict[length + i] = disengage_reward
 
     return reward_dict
 
 
-def make_cliff_transition(T, height, width, allow_disengage=False) -> np.ndarray:
+def make_chain_transition(T, height, width, prob, params, **kwargs) -> np.ndarray:
     """
-    Makes the cliff absorbing.
+    Creates a chain of states with a goal state at the end.
+    The start state is the first state.
+    The goal state is the last state.
+    The agent needs to walk through the chain to reach the goal.
+
+    At every state, the agent receives a burden cost.
+    Below every state in the chain is a disengage state with a disengage reward.
+
+    At every state, the agent can choose between action 1 (forward) and action 0 (disengage)
+    If the agent chooses action 0, it moves forward with probability prob and stays in place with probability 1 - prob.
+    If the agent chooses action 1, it moves to the disengage state with probability params["disengage_prob"],
+    moves back to the previous state with probability 1 - params["lost_progress_prob"], and stays in place with
+    probability 1 - params["disengage_prob"] - params["lost_progress_prob"].
+    Actions 2 and 3 takes the agent back to the same state with probability 1.
+
+    :param T: transition matrix with entries [action, state, next_state]
+    :param height: height of the gridworld
+    :param width: width of the gridworld
+    :param prob: probability of moving forward
+    :param kwargs: other arguments
+
+    returns a transition matrix for the chain.
     """
 
-    cliff_begin_x = 1
-    cliff_end_x = width - 1
-    # The cliff is one cell above the bottom row when we allow for disengagement
-    cliff_y = height - (1 + int(allow_disengage))
+    T = np.zeros_like(T)
 
-    # Make the cliff absorbing
-    T_new = T.copy()
+    # Set the transition matrix
+    for i in range(0, width - 1):
+        # Action 1 (forward)
+        T[1, i, i + 1] = prob
+        T[1, i, i] = 1 - prob
 
-    for i in range(cliff_begin_x, cliff_end_x):
-        idx = width * cliff_y + i
-        make_absorbing(T_new, idx)
+        # Action 3 (disengage)
+        T[3, i, i + width] = params["disengage_prob"]
+        T[3, i, i] = 1 - params["disengage_prob"] - params["lost_progress_prob"]
+        T[3, i, i - 1] = params["lost_progress_prob"]
 
-    if allow_disengage:
-        for i in range(0, width):
-            idx = width * (height - 1) + i
-            make_absorbing(T_new, idx)
+        # Set the rest of the actions to do nothing
+        T[0, i, i] = 1
+        T[2, i, i] = 1
 
-    return T_new
+    # Set the transition matrix for the last state
+    T[0, width - 1, width - 1] = 1
+    T[1, width - 1, width - 1] = 1
+    T[2, width - 1, width - 1] = 1
+    T[3, width - 1, width - 1] = 1
+
+    # Set the transition matrix for the disengage states
+    for i in range(0, width):
+        T[0, width + i, width + i] = 1
+        T[1, width + i, width + i] = 1
+        T[2, width + i, width + i] = 1
+        T[3, width + i, width + i] = 1
+
+    return T
 
 
-def make_cliff_experiment(
-    height,
-    width,
-    reward_mag,
-    small_r_mag,
-    neg_mag=-1e8,
-    latent_reward=0,
-    disengage_reward=0,
-    allow_disengage=False,
+def make_chain_experiment(
+    width=6,
+    prob=0.8,
+    gamma=0.9,
+    goal_mag=10,
+    burden=-2,  # For now, burden is the same as lost_progress_cost
+    # lost_progress_cost=-1,
+    disengage_reward=-0.5,
+    disengage_prob=0.1,
+    lost_progress_prob=0.3,
 ) -> Experiment_2D:
-    # Add one row for the disengage state if allowed
-    if allow_disengage:
-        height += 1
-
-    cliff_dict = cliff_reward(
-        x=width,
-        y=height,
-        s=neg_mag,
-        d=reward_mag,
-        latent_reward=latent_reward,
+    rewards_dict = chain_reward(
+        length=width,
+        goal_mag=goal_mag,
         disengage_reward=disengage_reward,
-        allow_disengage=allow_disengage,
+        burden=burden,
     )
 
     experiment = Experiment_2D(
-        height,
-        width,
-        rewards_dict=cliff_dict,
-        transition_mode=TransitionMode.FULL,
+        height=2,
+        gamma=gamma,
+        width=width,
+        rewards_dict=rewards_dict,
+        # transition_mode=TransitionMode.FULL,  # We don't need this because the transition matrix is overridden
     )
 
-    T_new = make_cliff_transition(
+    T_new = make_chain_transition(
         T=experiment.mdp.T,
-        height=height,
-        width=width,
-        allow_disengage=allow_disengage,
+        height=experiment.mdp.height,
+        width=experiment.mdp.width,
+        prob=prob,
+        params={
+            "disengage_prob": disengage_prob,
+            "lost_progress_prob": lost_progress_prob,
+        },
     )
 
     experiment.mdp.T = T_new
@@ -129,19 +149,17 @@ def make_cliff_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.72,
-        "gamma": 0.89,
-        "height": 3,
         "width": 8,
-        "reward_mag": 1e2,
-        "small_r_mag": 0,  # small_mag of 0 = normal cliff world
-        "neg_mag": -1e2,
-        "latent_reward": -1,
-        "disengage_reward": None,
-        "allow_disengage": False,
+        "prob": 0.72,
+        "gamma": 0.8,
+        "disengage_prob": 0.9,
+        "lost_progress_prob": 0.1,
+        "goal_mag": 7,
+        "disengage_reward": -3,
+        "burden": -2,
     }
 
-    experiment = make_cliff_experiment(**params)
+    experiment = make_chain_experiment(**params)
 
     # Make plot with 5 columns where the first column is the parameters
     # and the two plots span two columns each
@@ -172,13 +190,8 @@ if __name__ == "__main__":
         transform=ax1.transAxes,
     )
 
-    # Create a mask for the bottom row if the user is allowed to disengage
+    # Have no mask for now
     mask = None
-    if params["allow_disengage"]:
-        mask = np.zeros(
-            (params["height"] + int(params["allow_disengage"]), params["width"])
-        )
-        mask[-1, :] = 1
 
     plot_world_reward(experiment, setup_name="Cliff", ax=ax2, show=False, mask=mask)
 

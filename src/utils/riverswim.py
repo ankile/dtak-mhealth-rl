@@ -52,33 +52,44 @@ def riverswim_reward(
 
     return reward_dict
 
-def make_riverswim_transition(T, height, width, prob, allow_disengage=False) -> np.ndarray:
+
+def make_riverswim_transition(
+    T, height, width, prob, allow_disengage=False
+) -> np.ndarray:
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((2, width, width)) # reset transition matrix, which also removes absorbing states
+    T_new = np.zeros(
+        (2, width, width)
+    )  # reset transition matrix, which also removes absorbing states
 
     # set left behavior (0): deterministic
     T_new[0, 0, 0] = 1
     for row in range(1, width):
-        T_new[0, row, row-1] = 1
+        T_new[0, row, row - 1] = 1
 
     # set right behavior (1): based on the confidence
     # set first row
     T_new[1, 0, 0] = 1 - prob
     T_new[1, 0, 1] = prob
 
-    left_stay_ratio = 1/13 # can vary this ratio, but for now it's stuck at 1/13
+    left_stay_ratio = 1 / 13  # can vary this ratio, but for now it's stuck at 1/13
 
-    for row in range(1, width-1): # set the rows in between
-        T_new[1, row, row+1] = prob # intended action prob = confidence
-        T_new[1, row, row-1] = left_stay_ratio * (1-prob) # left action prob = ratio * (1-confidence)
-        T_new[1, row, row] = (1 - left_stay_ratio) * (1-prob) # right action prob = 1 - intended - left
+    for row in range(1, width - 1):  # set the rows in between
+        T_new[1, row, row + 1] = prob  # intended action prob = confidence
+        T_new[1, row, row - 1] = left_stay_ratio * (
+            1 - prob
+        )  # left action prob = ratio * (1-confidence)
+        T_new[1, row, row] = (1 - left_stay_ratio) * (
+            1 - prob
+        )  # right action prob = 1 - intended - left
 
     # set last row
-    T_new[1, width-1, width-2] = 1 - prob
-    T_new[1, width-1, width-2] = prob
+    T_new[1, width - 1, width - 2] = 1 - prob
+    T_new[1, width - 1, width - 2] = prob
+
     return T_new
+
 
 def make_riverswim_experiment(
     height,

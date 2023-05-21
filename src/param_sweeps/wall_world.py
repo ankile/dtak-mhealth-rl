@@ -14,37 +14,36 @@ def get_realized_probs_indices(height, width):
 
 # Setting the parameters
 default_params = dict(
-    height=5,
+    height=4,
     width=6,
     neg_mag=-10,
-    latent_cost=0,
-    reward_mag=300,
+    reward_mag=200,
 )
 
 
 if __name__ == "__main__":
     # === Set up the experiment === #
-    setup_name = "Pessimist Wall World"
+    setup_name = "Wall World"
 
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 5  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
     scalers, probs = None, None
-    scalers = 2 ** np.linspace(-1, 5, granularity)
-    # probs = np.linspace(0.4, 0.99, granularity)
+    # scalers = 2 ** np.linspace(-1, 5, granularity)
+    probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
         "height": list(range(4 - int(cols / 2), 4 + int(cols / 2) + 1)),
-        "width": list(range(7 - int(cols / 2), 7 + int(cols / 2) + 1)),
-        "reward_mag": np.linspace(100, 400, cols),
-        "neg_mag": np.linspace(-20, -7, cols),
+        "width": np.arange(5, 5 + cols),
+        "reward_mag": np.linspace(100, 200, cols),
+        "neg_mag": np.linspace(-20, -10, cols),
         # "latent_cost": list(range(-int(cols / 2), int(cols / 2) + 1)),
         # "prob": np.linspace(0.5, 0.95, cols),
     }
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         granularity=granularity,
         gammas=gammas,
         probs=probs,
-        scalers=scalers,
-        get_realized_probs_indices=get_realized_probs_indices,
+        # scalers=scalers,
+        # get_realized_probs_indices=get_realized_probs_indices,
         run_parallel=run_parallel,
     )

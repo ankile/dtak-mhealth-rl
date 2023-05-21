@@ -298,6 +298,9 @@ class Experiment_2D:
             if idx >= w and idx - w >= 0:
                 R[idx - w, 3, idx] = magnitude
 
+            # Add reward to the state itself
+            # R[idx, :, idx] = magnitude
+
         # previous state, action, new state
         R = np.zeros((n_states, 4, n_states))
 
@@ -346,6 +349,7 @@ class Experiment_2D:
         self,
         prob: float,
         gamma: float,
+        params: dict,
         transition_func: Callable[..., np.ndarray],
         use_pessimistic: bool = False,
     ) -> MDP_2D:
@@ -362,7 +366,9 @@ class Experiment_2D:
             self.action_success_prob = prob
 
         S, A, T, R = self.make_MDP_params()
-        T = transition_func(T, height=self.height, width=self.width, prob=prob)
+        T = transition_func(
+            T, height=self.height, width=self.width, prob=prob, params=params
+        )
 
         if use_pessimistic:
             T = apply_pessimism_to_transition(T, self.rewards_dict, prob)
