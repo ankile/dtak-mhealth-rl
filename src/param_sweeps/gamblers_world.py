@@ -1,10 +1,10 @@
 import numpy as np
 from src.utils.param_sweep import run_param_sweep
-from src.utils.riverswim import make_riverswim_experiment, make_riverswim_transition
+from src.utils.gamblers import make_gamblers_experiment, make_gamblers_transition
 
 
 def get_start_state(height, width):
-    return 1
+    return width // 2
 
 
 # Setting the parameters
@@ -20,14 +20,11 @@ default_params = dict(
 
 if __name__ == "__main__":
     """
-    River Swim World:
-    1D world with a desired reward on right and smaller reward on left.
-    Taking the left action is deterministic, but the right action depends on the confidence.
-    Default right transitions: 0.6 to the same state, 0.05 to the left, 0.35 to the right state.
+    Gamblers World:
     """
 
     # === Set up the experiment === #
-    setup_name = "Riverswim World"
+    setup_name = "Gamblers World"
 
     run_parallel = True
 
@@ -55,8 +52,8 @@ if __name__ == "__main__":
         setup_name=setup_name,
         default_params=default_params,
         search_parameters=search_parameters,
-        create_experiment_func=make_riverswim_experiment,
-        transition_matrix_func=make_riverswim_transition,
+        create_experiment_func=make_gamblers_experiment,
+        transition_matrix_func=make_gamblers_transition,
         rows=rows,
         cols=cols,
         get_start_state=get_start_state,

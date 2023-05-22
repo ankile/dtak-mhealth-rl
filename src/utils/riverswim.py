@@ -54,12 +54,12 @@ def riverswim_reward(
 
 
 def make_riverswim_transition(
-    T, height, width, prob, allow_disengage=False
+    T, height, width, prob, params, allow_disengage=False
 ) -> np.ndarray:
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((2, width, width)) # reset transition matrix, which also removes absorbing states
+    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
 
     # set left behavior (0): deterministic
     T_new[0, 0, 0] = 1
@@ -92,13 +92,15 @@ def make_riverswim_transition(
         T_new[3, row, row] = 1
     return T_new
 
-
 def make_riverswim_experiment(
+    prob,
+    gamma,
     height,
     width,
-    prob,
     big_r,
     small_r,
+    disengage_reward=None,
+    allow_disengage=False,
 ) -> Experiment_2D:
     riverswim_dict = riverswim_reward(
         height=height,
@@ -120,6 +122,7 @@ def make_riverswim_experiment(
         height=1,
         width=width,
         prob=prob,
+        params={},  # not used
     )
 
     experiment.mdp.T = T_new
@@ -130,12 +133,11 @@ def make_riverswim_experiment(
 if __name__ == "__main__":
     params = {
         "prob": 0.72,
-        "gamma": 0.89,
+        "gamma": 0.99,
         "height": 1,
         "width": 5,
-        "big_r": 1,
-        "small_r": 0.01,
-        "latent_reward": 0,
+        "big_r": 5,
+        "small_r": 1,
         "disengage_reward": None,
         "allow_disengage": False,
     }
@@ -179,7 +181,7 @@ if __name__ == "__main__":
         )
         mask[-1, :] = 1
 
-    plot_world_reward(experiment, setup_name="Cliff", ax=ax2, show=False, mask=mask)
+    plot_world_reward(experiment, setup_name="Riverswim", ax=ax2, show=False, mask=mask)
 
     experiment.mdp.solve(
         save_heatmap=False,

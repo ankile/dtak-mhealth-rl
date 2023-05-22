@@ -8,13 +8,21 @@ from src.visualization.worldviz import plot_world_reward
 from src.worlds.mdp2d import Experiment_2D
 
 
+def get_goal_states(h, w) -> set:
+    """
+    Returns a list of goal states for a gridworld of size (h, w).
+    """
+    goal_states = {0, w - 1}
+
+    return goal_states
+
+
 def gamblers_reward(
-    length: int,
-    small_r,
+    height,
+    width,
+    prob,
     big_r,
-    latent_reward=0,
-    allow_disengage=False,
-    disengage_reward=0,
+    small_r,
 ) -> dict:
     """
     Creates a cliff on the bottom of the gridworld.
@@ -24,77 +32,89 @@ def gamblers_reward(
 
     The agent needs to walk around the cliff to reach the goal.
 
-    :param x: width of the gridworld
-    :param y: height of the gridworld
-    :param d: reward for reaching the goal
-    :param c: latent cost
+    :param x: length of river swim
+    :param R: big reward on right
+    :param r: small reward on left
+    :param latent_reward: latent cost
     :param T: the transition matrix
-    :param s: cost of falling off the cliff
-    :param allow_disengage: whether to allow the agent to disengage in the world
+    :param allow_disengage: whether to allow the agent to disengage in the world (not applicable here)
 
     returns a dictionary of rewards for each state in the gridworld.
     """
     # Create the reward dictionary
     reward_dict = {}
+    for i in range(width):
+        reward_dict[i] = 0  # add latent cost
 
-    # small reward is 0
-
-    # setup big reward
-    for i in range(1, length-1):
-        reward_dict[2*length + i] = big_r
-
-    reward_dict[2*length-1] = big_r
+    # set rewards/goal states
+    reward_dict[0] = small_r
+    reward_dict[width - 1] = big_r
 
     return reward_dict
 
 
-def make_gamblers_transition(T, height, width, prob, allow_disengage=False) -> np.ndarray:
+def make_gamblers_transition(
+    T, height, width, prob, params, allow_disengage=False
+) -> np.ndarray:
     """
-    Sets up gambler's ruin transition probabilities.
+    Sets up the transition matrix for the gamblres environment.
     """
+    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
+    goal_prob = 1 # subject to change
+    # set continuation behavior (0): either left one step or right one step
+    for row in range(1, width-1):
+        # T_new[0, row, row-1] = 1 - prob
+        # T_new[0, row, row+1] = prob
+        T_new[0, row, 0] = 1
+        T_new[0, row, width-1] = 0
 
-    # up and down are the same: both are going to terminal states
-    # left and right are the same: both are going to the next state
+    # set finish behavior (1): either dead end or goal
+    goal_prob = 1 # subject to change
+    for row in range(1, width-1):
+        T_new[1, row, 0] = 1 - goal_prob
+        T_new[1, row, width-1] = goal_prob
 
+    # set up and down behavior (2, 3): deterministic
+    for row in range(width):
+        T_new[2, row, row] = 1
+        T_new[3, row, row] = 1
+
+    # make goal, dead-end states absorbing
+    make_absorbing(T_new, 0)
+    make_absorbing(T_new, width-1)
     return T_new
 
-
 def make_gamblers_experiment(
+    prob,
+    gamma,
     height,
     width,
-    reward_mag,
-    small_r_mag,
-    neg_mag=-1e8,
-    latent_reward=0,
-    disengage_reward=0,
+    big_r,
+    small_r,
+    disengage_reward=None,
     allow_disengage=False,
 ) -> Experiment_2D:
-    # Add one row for the disengage state if allowed
-    if allow_disengage:
-        height += 1
-
     gamblers_dict = gamblers_reward(
-        x=width,
-        y=height,
-        s=neg_mag,
-        d=reward_mag,
-        latent_reward=latent_reward,
-        disengage_reward=disengage_reward,
-        allow_disengage=allow_disengage,
+        height=height,
+        width=width,
+        prob=prob,
+        big_r=big_r,
+        small_r=small_r,
     )
 
     experiment = Experiment_2D(
-        height,
-        width,
+        height=height,
+        width=width,
         rewards_dict=gamblers_dict,
         transition_mode=TransitionMode.FULL,
     )
 
     T_new = make_gamblers_transition(
         T=experiment.mdp.T,
-        height=height,
+        height=1,
         width=width,
-        allow_disengage=allow_disengage,
+        prob=prob,
+        params={},  # not used
     )
 
     experiment.mdp.T = T_new
@@ -105,13 +125,11 @@ def make_gamblers_experiment(
 if __name__ == "__main__":
     params = {
         "prob": 0.72,
-        "gamma": 0.89,
-        "height": 3,
-        "width": 8,
-        "reward_mag": 1e2,
-        "small_r_mag": 0,  # small_mag of 0 = normal cliff world
-        "neg_mag": -1e2,
-        "latent_reward": -1,
+        "gamma": 0.9,
+        "height": 1,
+        "width": 5,
+        "big_r": 5,
+        "small_r": 0,
         "disengage_reward": None,
         "allow_disengage": False,
     }
@@ -155,7 +173,7 @@ if __name__ == "__main__":
         )
         mask[-1, :] = 1
 
-    plot_world_reward(experiment, setup_name="Cliff", ax=ax2, show=False, mask=mask)
+    plot_world_reward(experiment, setup_name="Gamblers", ax=ax2, show=False, mask=mask)
 
     experiment.mdp.solve(
         save_heatmap=False,
