@@ -53,26 +53,26 @@ def gamblers_reward(
     return reward_dict
 
 
-def make_gamblers_transition(
-    T, height, width, prob, params, allow_disengage=False
-) -> np.ndarray:
+def make_gamblers_transition(width, **kwargs) -> np.ndarray:
     """
     Sets up the transition matrix for the gamblres environment.
     """
-    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
-    goal_prob = 1 # subject to change
+    T_new = np.zeros(
+        (4, width, width)
+    )  # reset transition matrix, which also removes absorbing states
+    goal_prob = 1  # subject to change
     # set continuation behavior (0): either left one step or right one step
-    for row in range(1, width-1):
+    for row in range(1, width - 1):
         # T_new[0, row, row-1] = 1 - prob
         # T_new[0, row, row+1] = prob
-        T_new[0, row, 0] = 1
-        T_new[0, row, width-1] = 0
+        T_new[0, row, 0] = goal_prob
+        T_new[0, row, width - 1] = goal_prob
 
     # set finish behavior (1): either dead end or goal
-    goal_prob = 1 # subject to change
-    for row in range(1, width-1):
+    goal_prob = 1  # subject to change
+    for row in range(1, width - 1):
         T_new[1, row, 0] = 1 - goal_prob
-        T_new[1, row, width-1] = goal_prob
+        T_new[1, row, width - 1] = goal_prob
 
     # set up and down behavior (2, 3): deterministic
     for row in range(width):
@@ -81,8 +81,9 @@ def make_gamblers_transition(
 
     # make goal, dead-end states absorbing
     make_absorbing(T_new, 0)
-    make_absorbing(T_new, width-1)
+    make_absorbing(T_new, width - 1)
     return T_new
+
 
 def make_gamblers_experiment(
     prob,
@@ -109,13 +110,7 @@ def make_gamblers_experiment(
         transition_mode=TransitionMode.FULL,
     )
 
-    T_new = make_gamblers_transition(
-        T=experiment.mdp.T,
-        height=1,
-        width=width,
-        prob=prob,
-        params={},  # not used
-    )
+    T_new = make_gamblers_transition(width=width)
 
     experiment.mdp.T = T_new
 

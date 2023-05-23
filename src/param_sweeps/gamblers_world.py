@@ -40,8 +40,8 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "width": np.arange(5, 5+cols, 1),
-        "big_r": np.arange(2, 2+cols, 1),
+        "width": np.arange(5, 5 + cols, 1),
+        "big_r": np.arange(2, 2 + cols, 1),
     }
 
     rows = len(search_parameters)

@@ -4,6 +4,9 @@ import numpy as np
 import seaborn as sns
 
 
+cmap = sns.color_palette("tab10")
+
+
 def make_general_strategy_heatmap(
     *,
     results,
@@ -17,6 +20,7 @@ def make_general_strategy_heatmap(
     num_ticks=10,
     title_fontsize=8,
     legend_fontsize=5,
+    tick_fontsize=8,
 ) -> None:
     make_strategy_heatmap(
         results,
@@ -28,10 +32,8 @@ def make_general_strategy_heatmap(
         ax_labels=ax_labels,
         num_ticks=num_ticks,
         title_fontsize=title_fontsize,
+        tick_fontsize=tick_fontsize,
     )
-
-    # Obtain the colormap
-    cmap = sns.color_palette("Blues", len(p2idx))
 
     # Create legend patches
     legend_patches = [
@@ -51,6 +53,7 @@ def make_strategy_heatmap(
     ax_labels=True,
     num_ticks=10,
     title_fontsize=8,
+    tick_fontsize=8,
 ) -> None:
     # compute the indices to use for the tick labels
     gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
@@ -64,59 +67,28 @@ def make_strategy_heatmap(
     sns.heatmap(
         results,
         annot=annot,
-        cmap="Blues",
+        cmap=cmap,
         fmt="d",
         ax=ax,
         cbar=False,
         square=True,
-        vmin=-1,
-        vmax=np.max(results),
+        vmax=10,
     )
 
     # set the tick labels and positions
     ax.xaxis.set_major_locator(ticker.FixedLocator(gamma_indices))
-    ax.set_xticklabels(gamma_ticks, rotation=90, size=8)
+    ax.set_xticklabels(gamma_ticks, rotation=0, size=tick_fontsize)
     ax.yaxis.set_major_locator(ticker.FixedLocator(prob_indices))
-    ax.set_yticklabels(prob_ticks, size=8, rotation=0)
+    ax.set_yticklabels(prob_ticks, rotation=90, size=tick_fontsize)
 
     # invert the y-axis
     ax.invert_yaxis()
 
     if ax_labels:
-        ax.set_xlabel("Gamma")
-        ax.set_ylabel("Confidence")
+        ax.set_ylabel(r"Confidence level $p_u$", size=tick_fontsize)
+        ax.set_xlabel(r"Discount factor $\gamma$", size=tick_fontsize)
 
     if title:
         ax.set_title(title, size=title_fontsize)
 
     return ax
-
-
-def plot_wall_strategy_heatmap(
-    results,
-    probs,
-    gammas,
-    ax,
-    title=None,
-    legend=True,
-    annot=True,
-    ax_labels=True,
-):
-    make_strategy_heatmap(
-        results=results,
-        probs=probs,
-        gammas=gammas,
-        ax=ax,
-        title=title,
-        annot=annot,
-        ax_labels=ax_labels,
-    )
-
-    # Set legend to the right to explain the numbers 1 and 3 with same colors as the heatmap
-    if legend:
-        ax.legend(
-            handles=[
-                mpatches.Patch(color="white", label="1: Right"),
-                mpatches.Patch(color="darkblue", label="3: Down"),
-            ],
-        )

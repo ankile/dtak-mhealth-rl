@@ -61,7 +61,11 @@ def cliff_reward(
 
 
 def make_cliff_transition(
-    T, height, width, prob=None, allow_disengage=False
+    T,
+    height,
+    width,
+    allow_disengage=False,
+    **kwargs,
 ) -> np.ndarray:
     """
     Makes the cliff absorbing.

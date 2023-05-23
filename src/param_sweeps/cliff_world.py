@@ -18,7 +18,7 @@ default_params = {
     "height": 5,
     "width": 9,
     "reward_mag": 1e2,
-    "small_r_mag": 0,
+    "small_r_mag": 2e2,
     "neg_mag": -1e8,
     "latent_reward": 0,
     # These are off by default because they turn the world into a compound world
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
         # The rest of these are not interesting to change for different reasons
         # "reward_mag": np.linspace(100, 500, cols),
-        # "small_r_mag": np.linspace(25, 100, cols),
+        "small_r_mag": np.linspace(100, 300, cols),
         # "neg_mag": np.linspace(-20, 0, cols),
         # "latent_reward": np.linspace(-3, 0, cols),
         # "disengage_reward": np.linspace(0, 10, cols),
