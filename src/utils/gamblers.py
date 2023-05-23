@@ -12,7 +12,12 @@ def get_goal_states(h, w) -> set:
     """
     Returns a list of goal states for a gridworld of size (h, w).
     """
-    goal_states = {0, w - 1}
+    goal_states = {w, 2*w-1}
+    for i in range(1, w-1):
+        goal_states.add(i)
+    
+    for i in range(2*w+1, 3*w-1):
+        goal_states.add(i)
 
     return goal_states
 
@@ -47,8 +52,15 @@ def gamblers_reward(
         reward_dict[i] = 0  # add latent cost
 
     # set rewards/goal states
-    reward_dict[0] = small_r
-    reward_dict[width - 1] = big_r
+
+    reward_dict[width] = small_r
+    reward_dict[2*width - 1] = big_r
+
+    for i in range(1, width-1):
+        reward_dict[i] = small_r
+    
+    for i in range(2*width+1, 3*width-1):
+        reward_dict[i] = big_r
 
     return reward_dict
 
@@ -59,29 +71,36 @@ def make_gamblers_transition(
     """
     Sets up the transition matrix for the gamblres environment.
     """
-    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
-    goal_prob = 1 # subject to change
-    # set continuation behavior (0): either left one step or right one step
-    for row in range(1, width-1):
-        # T_new[0, row, row-1] = 1 - prob
-        # T_new[0, row, row+1] = prob
-        T_new[0, row, 0] = 1
-        T_new[0, row, width-1] = 0
+    T_new = np.zeros((4, width*height, width*height)) # reset transition matrix, which also removes absorbing states
 
-    # set finish behavior (1): either dead end or goal
-    goal_prob = 1 # subject to change
-    for row in range(1, width-1):
-        T_new[1, row, 0] = 1 - goal_prob
-        T_new[1, row, width-1] = goal_prob
+    # set continuation behavior (1): either left one step or right one step
+    for row in range(width+1, 2*width-1):
+        # T_new[1, row, row-1] = 1 - goal_prob
+        # T_new[1, row, row+1] = goal_prob
+        T_new[1, row, row-1] = 1 - prob
+        T_new[1, row, row+1] = prob
 
-    # set up and down behavior (2, 3): deterministic
-    for row in range(width):
+    # set finish behavior (2): either dead end or goal
+    goal_prob = 0.2 # subject to change
+    for row in range(width+1, 2*width-1):
+        T_new[3, row, row-width] = 1 - goal_prob
+        T_new[3, row, row+width] = goal_prob
+
+    # set left and up behavior (0, 2): deterministic
+    for row in range(height*width):
+        T_new[0, row, row] = 1
         T_new[2, row, row] = 1
-        T_new[3, row, row] = 1
 
-    # make goal, dead-end states absorbing
-    make_absorbing(T_new, 0)
-    make_absorbing(T_new, width-1)
+    # make goal, dead-end, and invalid states absorbing
+    make_absorbing(T_new, width)
+    make_absorbing(T_new, 2*width-1)
+
+    for i in range(width):
+        make_absorbing(T_new, i)
+    
+    for i in range(2*width, 3*width):
+        make_absorbing(T_new, i)
+
     return T_new
 
 def make_gamblers_experiment(
@@ -111,7 +130,7 @@ def make_gamblers_experiment(
 
     T_new = make_gamblers_transition(
         T=experiment.mdp.T,
-        height=1,
+        height=3,
         width=width,
         prob=prob,
         params={},  # not used
@@ -126,10 +145,10 @@ if __name__ == "__main__":
     params = {
         "prob": 0.72,
         "gamma": 0.9,
-        "height": 1,
+        "height": 3,
         "width": 5,
         "big_r": 5,
-        "small_r": 0,
+        "small_r": 1,
         "disengage_reward": None,
         "allow_disengage": False,
     }

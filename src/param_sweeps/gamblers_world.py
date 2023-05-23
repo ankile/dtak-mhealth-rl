@@ -4,17 +4,17 @@ from src.utils.gamblers import make_gamblers_experiment, make_gamblers_transitio
 
 
 def get_start_state(height, width):
-    return width // 2
+    return (height * width) // 2
 
 
 # Setting the parameters
 default_params = dict(
-    height=1,
-    width=7,
+    height=3,
+    width=5,
     prob=0.8,
     gamma=0.9,
     big_r=5,
-    small_r=1,
+    small_r=0,
 )
 
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
         "width": np.arange(5, 5+cols, 1),
-        "big_r": np.arange(2, 2+cols, 1),
+        "big_r": np.arange(5, 5+cols, 1),
     }
 
     rows = len(search_parameters)
