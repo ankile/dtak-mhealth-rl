@@ -21,6 +21,7 @@ def make_general_strategy_heatmap(
     title_fontsize=8,
     legend_fontsize=5,
     tick_fontsize=8,
+    legend=True,
 ) -> None:
     make_strategy_heatmap(
         results,
@@ -36,11 +37,12 @@ def make_general_strategy_heatmap(
     )
 
     # Create legend patches
-    legend_patches = [
-        mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()  # type: ignore
-    ]
+    if legend:
+        legend_patches = [
+            mpatches.Patch(color=cmap[idx], label=f"{path}") for path, idx in p2idx.items()  # type: ignore
+        ]
 
-    ax.legend(handles=legend_patches, loc="upper left", fontsize=legend_fontsize)
+        ax.legend(handles=legend_patches, loc="upper left", fontsize=legend_fontsize)
 
 
 def make_strategy_heatmap(
