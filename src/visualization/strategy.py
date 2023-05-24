@@ -85,7 +85,7 @@ def make_strategy_heatmap(
     ax.invert_yaxis()
 
     if ax_labels:
-        ax.set_ylabel(r"Confidence level $p_u$", size=tick_fontsize)
+        ax.set_ylabel(r"Confidence level $p$", size=tick_fontsize)
         ax.set_xlabel(r"Discount factor $\gamma$", size=tick_fontsize)
 
     if title:

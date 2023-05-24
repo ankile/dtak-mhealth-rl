@@ -9,7 +9,6 @@ def get_start_state(height, width):
 
 # Setting the parameters
 default_params = dict(
-    height=3,
     width=5,
     prob=0.8,
     gamma=0.9,

@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 from src.utils.enums import TransitionMode
 
-from src.utils.transition_matrix import make_absorbing
 from src.visualization.worldviz import plot_world_reward
 from src.worlds.mdp2d import Experiment_2D
 
@@ -18,11 +17,10 @@ def get_goal_states(h, w) -> set:
 
 
 def riverswim_reward(
-    height,
     width,
-    prob,
     big_r,
     small_r,
+    **kwargs,
 ) -> dict:
     """
     Creates a cliff on the bottom of the gridworld.
@@ -53,13 +51,13 @@ def riverswim_reward(
     return reward_dict
 
 
-def make_riverswim_transition(
-    T, height, width, prob, params, allow_disengage=False
-) -> np.ndarray:
+def make_riverswim_transition(width, prob, **kwargs) -> np.ndarray:
     """
     Sets up the transition matrix for the riverswim environment.
     """
-    T_new = np.zeros((4, width, width)) # reset transition matrix, which also removes absorbing states
+    T_new = np.zeros(
+        (4, width, width)
+    )  # reset transition matrix, which also removes absorbing states
 
     # set left behavior (0): deterministic
     T_new[0, 0, 0] = 1
@@ -83,8 +81,8 @@ def make_riverswim_transition(
         )  # right action prob = 1 - intended - left
 
     # set last row
-    T_new[1, width-1, width-2] = 1 - prob
-    T_new[1, width-1, width-1] = prob
+    T_new[1, width - 1, width - 2] = 1 - prob
+    T_new[1, width - 1, width - 1] = prob
 
     # set up and down behavior (2, 3): deterministic
     for row in range(width):
@@ -92,20 +90,17 @@ def make_riverswim_transition(
         T_new[3, row, row] = 1
     return T_new
 
+
 def make_riverswim_experiment(
     prob,
-    gamma,
     height,
     width,
     big_r,
     small_r,
-    disengage_reward=None,
-    allow_disengage=False,
+    **kwargs,
 ) -> Experiment_2D:
     riverswim_dict = riverswim_reward(
-        height=height,
         width=width,
-        prob=prob,
         big_r=big_r,
         small_r=small_r,
     )
@@ -122,7 +117,6 @@ def make_riverswim_experiment(
         height=1,
         width=width,
         prob=prob,
-        params={},  # not used
     )
 
     experiment.mdp.T = T_new

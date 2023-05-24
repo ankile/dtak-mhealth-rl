@@ -367,7 +367,7 @@ class Experiment_2D:
 
         S, A, T, R = self.make_MDP_params()
         T = transition_func(
-            T, height=self.height, width=self.width, prob=prob, params=params
+            T=T, height=self.height, width=self.width, prob=prob, params=params
         )
 
         if use_pessimistic:

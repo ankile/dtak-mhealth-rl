@@ -65,26 +65,38 @@ def gamblers_reward(
     return reward_dict
 
 
-def make_gamblers_transition(width, height, prob, **kwargs) -> np.ndarray:
+def make_gamblers_transition(
+    height,
+    width,
+    prob,
+    vary_continuation=True,
+    **kwargs,
+) -> np.ndarray:
     """
-    Sets up the transition matrix for the gamblres environment.
+    Sets up the transition matrix for the gamblers environment.
     """
+
     T_new = np.zeros(
         (4, width * height, width * height)
     )  # reset transition matrix, which also removes absorbing states
+    goal_prob = 0.8  # subject to change
+
+    if vary_continuation:
+        cont_prob = prob
+        finish_prob = goal_prob
+    else:
+        cont_prob = goal_prob
+        finish_prob = prob
 
     # set continuation behavior (1): either left one step or right one step
     for row in range(width + 1, 2 * width - 1):
-        # T_new[1, row, row-1] = 1 - goal_prob
-        # T_new[1, row, row+1] = goal_prob
-        T_new[1, row, row - 1] = 1 - prob
-        T_new[1, row, row + 1] = prob
+        T_new[1, row, row - 1] = 1 - cont_prob
+        T_new[1, row, row + 1] = cont_prob
 
     # set finish behavior (2): either dead end or goal
-    goal_prob = 0.2  # subject to change
     for row in range(width + 1, 2 * width - 1):
-        T_new[3, row, row - width] = 1 - goal_prob
-        T_new[3, row, row + width] = goal_prob
+        T_new[3, row, row - width] = 1 - finish_prob
+        T_new[3, row, row + width] = finish_prob
 
     # set left and up behavior (0, 2): deterministic
     for row in range(height * width):
@@ -106,16 +118,16 @@ def make_gamblers_transition(width, height, prob, **kwargs) -> np.ndarray:
 
 def make_gamblers_experiment(
     prob,
-    gamma,
-    height,
     width,
     big_r,
     small_r,
-    disengage_reward=None,
-    allow_disengage=False,
+    vary_continuation=True,
+    **kwargs,
 ) -> Experiment_2D:
+    gamblers_height = 3
+
     gamblers_dict = gamblers_reward(
-        height=height,
+        height=gamblers_height,
         width=width,
         prob=prob,
         big_r=big_r,
@@ -123,7 +135,7 @@ def make_gamblers_experiment(
     )
 
     experiment = Experiment_2D(
-        height=height,
+        height=gamblers_height,
         width=width,
         rewards_dict=gamblers_dict,
         transition_mode=TransitionMode.FULL,
@@ -131,10 +143,10 @@ def make_gamblers_experiment(
 
     T_new = make_gamblers_transition(
         T=experiment.mdp.T,
-        height=3,
+        height=gamblers_height,
         width=width,
         prob=prob,
-        params={},  # not used
+        vary_continuation=vary_continuation,
     )
 
     experiment.mdp.T = T_new

@@ -10,7 +10,6 @@ def get_start_state(height, width):
 # Setting the parameters
 default_params = {
     "width": 5,
-    # "height": 2,
     "disengage_prob": 0.3,
     "lost_progress_prob": 0.1,
     "goal_mag": 15,

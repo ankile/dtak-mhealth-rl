@@ -1,9 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
-from src.utils.enums import TransitionMode
 
-from src.utils.transition_matrix import make_absorbing
 from src.visualization.worldviz import plot_world_reward
 from src.worlds.mdp2d import Experiment_2D
 
@@ -46,7 +44,7 @@ def chain_reward(
     return reward_dict
 
 
-def make_chain_transition(T, height, width, prob, params, **kwargs) -> np.ndarray:
+def make_chain_transition(T, width, prob, params, **kwargs) -> np.ndarray:
     """
     Creates a chain of states with a goal state at the end.
     The start state is the first state.
