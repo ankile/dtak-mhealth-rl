@@ -8,10 +8,11 @@ from src.param_sweeps.wall_world import perform_sweep as wall_sweep
 
 if __name__ == "__main__":
     path = lambda s: f"images/plots/parameter_pertubation_{s}.pdf"
-    # chain_sweep(path("Chain"))
-    # cliff_sweep(path("Cliff"))
-    # gamblers_sweep(path("Gamblers_pC"))
-    # gamblers_sweep(path("Gamblers_pF"), prob_to_vary="F")
-    # river_sweep(path("RiverSwim"))
+
+    chain_sweep(path("Chain"))
+    cliff_sweep(path("Cliff"))
+    gamblers_sweep(path("Gamblers_pC"))
+    gamblers_sweep(path("Gamblers_pF"), prob_to_vary="F")
+    river_sweep(path("RiverSwim"))
     bigsmall_sweep(path("BigSmall"))
-    # wall_sweep(path("Wall"))
+    wall_sweep(path("Wall"))
