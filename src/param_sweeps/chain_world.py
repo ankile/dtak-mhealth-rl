@@ -18,7 +18,7 @@ default_params = {
 }
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None):
     """
     Chain World
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 30  # 5, 10, 20
+    granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.4, 0.99, granularity)
@@ -68,5 +68,10 @@ if __name__ == "__main__":
         gammas=gammas,
         probs=probs,
         run_parallel=run_parallel,
-        filename="images/plots/parameter_pertubation_chain.pdf",
+        filename=filename,
+        subtitle_location=0.96,
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()

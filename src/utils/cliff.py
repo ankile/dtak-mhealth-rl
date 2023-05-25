@@ -95,7 +95,7 @@ def make_cliff_experiment(
     height,
     width,
     reward_mag,
-    small_r_mag,
+    small_r_mag=0,
     neg_mag=-1e8,
     latent_reward=0,
     disengage_reward=0,

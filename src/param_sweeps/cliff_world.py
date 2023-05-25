@@ -9,48 +9,41 @@ def get_start_state(height, width):
     return (height - 1) * width
 
 
-def get_realized_probs_indices(height, width):
-    # Probability of going up from the bottom left corner
-    return [Action.UP.value, (height - 1) * width, (height - 2) * width]
-
-
 default_params = {
     "height": 5,
     "width": 9,
     "reward_mag": 1e2,
-    "small_r_mag": 2e2,
     "neg_mag": -1e8,
     "latent_reward": 0,
     # These are off by default because they turn the world into a compound world
-    "disengage_reward": 0,
-    "allow_disengage": False,
+    # "disengage_reward": 0,
+    # "allow_disengage": False,
+    # "small_r_mag": 0,
 }
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None):
     # === Start of setup === #
-    setup_name = "Cliff World Param Viz"
+    setup_name = "Cliff World"
 
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 7  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
-    scalers, probs = None, None
-    # scalers = 2 ** np.linspace(-1, 5, granularity)
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
-        "width": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
-        "height": np.arange(7 - int(cols / 2), 7 + round(cols / 2)) + 1,
+        "width": np.linspace(4, 10, cols).round().astype(int),
+        "height": np.linspace(4, 10, cols).round().astype(int),
+        "reward_mag": np.linspace(100, 500, cols),
         # The rest of these are not interesting to change for different reasons
-        # "reward_mag": np.linspace(100, 500, cols),
-        "small_r_mag": np.linspace(100, 300, cols),
+        # "small_r_mag": np.linspace(100, 300, cols).round().astype(int),
         # "neg_mag": np.linspace(-20, 0, cols),
         # "latent_reward": np.linspace(-3, 0, cols),
         # "disengage_reward": np.linspace(0, 10, cols),
@@ -58,7 +51,6 @@ if __name__ == "__main__":
     }
 
     rows = len(search_parameters)
-
     # === End of setup === #
 
     run_param_sweep(
@@ -72,8 +64,20 @@ if __name__ == "__main__":
         get_start_state=get_start_state,
         granularity=granularity,
         probs=probs,
-        scalers=scalers,
-        # get_realized_probs_indices=get_realized_probs_indices,
         gammas=gammas,
         run_parallel=run_parallel,
+        subtitle_location=0.94,
+        p2idx_override={
+            "Safe": 0,
+            "Dangerous": 1,
+        },
+        idx_map={
+            0: 1,
+        }
+        | {i: 0 for i in range(1, 10)},
+        filename=filename,
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()

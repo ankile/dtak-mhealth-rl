@@ -20,20 +20,18 @@ default_params = dict(
 )
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None, prob_to_vary="C"):
     """
     Gamblers World:
     """
 
     # === Set up the experiment === #
-    prob_to_vary = "C"  # "F"
-
     setup_name = f"Gamblers World (p_{prob_to_vary})"
 
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 9  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
@@ -44,12 +42,11 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "width": np.arange(5, 5 + cols, 1),
-        "big_r": np.arange(5, 5 + cols, 1),
+        "width": np.linspace(5, 14, cols).round().astype(int),
+        "big_r": np.linspace(5, 14, cols).round().astype(int),
     }
 
     rows = len(search_parameters)
-
     # === End of setup === #
 
     run_param_sweep(
@@ -70,3 +67,7 @@ if __name__ == "__main__":
         probs=probs,
         run_parallel=run_parallel,
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()

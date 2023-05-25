@@ -162,6 +162,9 @@ def run_param_sweep(
     filename=None,
     save_metadata=False,
     show_plot=False,
+    subtitle_location=0.95,
+    p2idx_override=None,
+    idx_map=None,
 ):
     assert not (
         probs is not None and scalers is not None
@@ -191,7 +194,6 @@ def run_param_sweep(
     )
 
     n_processes = (os.cpu_count() if run_parallel else 1) or 1
-    print(f"Running {n_processes} processes...")
     start = datetime.now()
     with OptionalPool(processes=n_processes) as pool:
         strategy_data = list(
@@ -199,7 +201,7 @@ def run_param_sweep(
                 # pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 total=rows * cols,
-                desc=f"Running with cols={cols}, rows={rows}, granularity={granularity}",
+                desc=f"Running {setup_name} with cols={cols}, rows={rows}, granularity={granularity}, cores={n_processes}",
                 ncols=0,
             )
         )
@@ -209,7 +211,7 @@ def run_param_sweep(
     fig, axs = plt.subplots(
         nrows=rows,
         ncols=cols,
-        figsize=(round(2 * cols), round(2.2 * rows)),
+        figsize=(2 * cols, 0.7 + 2.1 * rows),
         sharex=True,
         sharey=True,
     )
@@ -217,10 +219,16 @@ def run_param_sweep(
     for (data, p2idx, param, value, realized_probs), ax in zip(
         strategy_data, axs.flatten()
     ):
+        if idx_map:
+            new_data = np.zeros_like(data)
+            for fromm, to in idx_map.items():
+                new_data[data == fromm] = to
+            data = new_data
+
         make_general_strategy_heatmap(
             results=data,
             probs=realized_probs,
-            p2idx=p2idx,
+            p2idx=p2idx_override or p2idx,
             title=f"{param}={value:.2f}",
             ax=ax,
             gammas=gammas,
@@ -233,7 +241,7 @@ def run_param_sweep(
     fig.suptitle(f"{setup_name} Equivalence Class Invariance\n")
     fig.text(
         0.5,
-        0.96,
+        subtitle_location,
         "Default: " + ", ".join(f"{k}={v}" for k, v in default_params.items()),
         size=8,
         ha="center",
