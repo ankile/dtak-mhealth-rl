@@ -227,8 +227,8 @@ experiments = {
     },
     "Gambler's ($p_F$)": {
         "p2idx": {
-            "Continue": 1,
-            "Finish": 0,
+            "Continue": 0,
+            "Finish": 1,
         },
         "default": 1,
         "experiment": make_gamblers_experiment(

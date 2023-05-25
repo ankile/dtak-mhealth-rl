@@ -17,7 +17,7 @@ default_params = dict(
 )
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None):
     """
     This world includes a small and a big reward where the small reward is closer to the start state.
     The agent starts in the top-left corner and can move right or down. The small reward is in the bottom-left corner
@@ -35,12 +35,12 @@ if __name__ == "__main__":
     """
 
     # === Set up the experiment === #
-    setup_name = "Small and Big Reward World"
+    setup_name = "Big-Small"
 
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 9  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
@@ -51,14 +51,13 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "height": np.arange(cols) + default_params["height"] - int(cols / 2),
-        "width": np.arange(cols) + default_params["width"] - int(cols / 2),
+        "height": np.linspace(3, 11, cols).round().astype(int),
+        "width": np.linspace(3, 11, cols).round().astype(int),
         "big_reward": np.linspace(100, 400, cols),
-        "small_reward_frac": np.linspace(0.1, 0.9, cols),
+        "small_reward_frac": np.linspace(0.05, 0.8, cols),
     }
 
     rows = len(search_parameters)
-
     # === End of setup === #
 
     run_param_sweep(
@@ -74,4 +73,15 @@ if __name__ == "__main__":
         gammas=gammas,
         probs=probs,
         run_parallel=run_parallel,
+        subtitle_location=0.95,
+        p2idx_override={
+            "Close small R": 1,
+            "Far large R": 0,
+        },
+        idx_map={0: 1, 1: 0},
+        filename=filename,
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()

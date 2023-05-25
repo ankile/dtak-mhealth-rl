@@ -15,7 +15,7 @@ default_params = dict(
     width=5,
     prob=0.8,
     gamma=0.9,
-    big_r=5,
+    big_r=10,
     small_r=0,
 )
 
@@ -25,8 +25,10 @@ def perform_sweep(filename=None, prob_to_vary="C"):
     Gamblers World:
     """
 
+    assert prob_to_vary in {"C", "F"}, "Can only vary either [C]ontinue or [F]inish"
+
     # === Set up the experiment === #
-    setup_name = f"Gamblers World (p_{prob_to_vary})"
+    setup_name = f"Gamblers World ($p_{prob_to_vary}$)"
 
     run_parallel = True
 
@@ -42,8 +44,9 @@ def perform_sweep(filename=None, prob_to_vary="C"):
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "width": np.linspace(5, 14, cols).round().astype(int),
-        "big_r": np.linspace(5, 14, cols).round().astype(int),
+        "width": np.linspace(5, 8, cols).round().astype(int),
+        "big_r": np.linspace(5, 100, cols).round().astype(int),
+        # "small_r": np.linspace(0, 25, cols).round().astype(int),
     }
 
     rows = len(search_parameters)
@@ -66,8 +69,15 @@ def perform_sweep(filename=None, prob_to_vary="C"):
         gammas=gammas,
         probs=probs,
         run_parallel=run_parallel,
+        filename=filename,
+        subtitle_location=0.92,
+        p2idx_override={
+            "Continue": 0,
+            "Finish": 1,
+        },
+        idx_map={0: 1, 1: 0},
     )
 
 
 if __name__ == "__main__":
-    perform_sweep()
+    perform_sweep(prob_to_vary="F")

@@ -13,12 +13,12 @@ default_params = dict(
     width=7,
     prob=0.8,
     gamma=0.9,
-    big_r=5,
+    big_r=10,
     small_r=1,
 )
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None):
     """
     River Swim World:
     1D world with a desired reward on right and smaller reward on left.
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 9  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
@@ -43,8 +43,9 @@ if __name__ == "__main__":
 
     search_parameters = {
         # `cols` number of consecutive integers centered around the default value
-        "width": np.arange(5, 5+cols, 1),
-        "big_r": np.arange(2, 2+cols, 1),
+        "width": np.linspace(6, 14, cols).round().astype(int),
+        "big_r": np.linspace(2, 15, cols).round().astype(int),
+        "small_r": np.linspace(1, 5, cols).round().astype(int),
     }
 
     rows = len(search_parameters)
@@ -64,4 +65,15 @@ if __name__ == "__main__":
         gammas=gammas,
         probs=probs,
         run_parallel=run_parallel,
+        filename=filename,
+        subtitle_location=0.94,
+        p2idx_override={
+            "Upstream": 0,
+            "Downstream": 1,
+        },
+        idx_map={0: 1, 1: 0},
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()

@@ -194,7 +194,6 @@ def run_param_sweep(
     )
 
     n_processes = (os.cpu_count() if run_parallel else 1) or 1
-    start = datetime.now()
     with OptionalPool(processes=n_processes) as pool:
         strategy_data = list(
             tqdm(
@@ -205,7 +204,6 @@ def run_param_sweep(
                 ncols=0,
             )
         )
-    print(f"Finished in {datetime.now() - start}")
 
     # Create the figure and axes to plot on
     fig, axs = plt.subplots(

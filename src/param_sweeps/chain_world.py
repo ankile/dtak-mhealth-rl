@@ -70,6 +70,11 @@ def perform_sweep(filename=None):
         run_parallel=run_parallel,
         filename=filename,
         subtitle_location=0.96,
+        p2idx_override={
+            "Exercise": 0,
+            "Disengage": 1,
+        },
+        idx_map={0: 1, 1: 0},
     )
 
 

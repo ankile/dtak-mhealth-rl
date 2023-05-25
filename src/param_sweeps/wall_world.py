@@ -21,7 +21,7 @@ default_params = dict(
 )
 
 
-if __name__ == "__main__":
+def perform_sweep(filename=None):
     # === Set up the experiment === #
     setup_name = "Wall World"
 
@@ -34,22 +34,19 @@ if __name__ == "__main__":
     granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
-    scalers, probs = None, None
-    # scalers = 2 ** np.linspace(-1, 5, granularity)
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
-        "height": list(range(4 - int(cols / 2), 4 + int(cols / 2) + 1)),
-        "width": np.arange(5, 5 + cols),
-        "reward_mag": np.linspace(100, 200, cols),
+        "height": np.linspace(2, 5, cols).round().astype(int),
+        "width": np.linspace(5, 8, cols).round().astype(int),
+        "reward_mag": np.linspace(100, 250, cols),
         "neg_mag": np.linspace(-20, -10, cols),
         # "latent_cost": list(range(-int(cols / 2), int(cols / 2) + 1)),
         # "prob": np.linspace(0.5, 0.95, cols),
     }
 
     rows = len(search_parameters)
-
     # === End of setup === #
 
     run_param_sweep(
@@ -64,7 +61,15 @@ if __name__ == "__main__":
         granularity=granularity,
         gammas=gammas,
         probs=probs,
-        # scalers=scalers,
-        # get_realized_probs_indices=get_realized_probs_indices,
         run_parallel=run_parallel,
+        filename=filename,
+        subtitle_location=0.95,
+        p2idx_override={
+            "Around Wall": 0,
+            "Through Wall": 1,
+        },
     )
+
+
+if __name__ == "__main__":
+    perform_sweep()
