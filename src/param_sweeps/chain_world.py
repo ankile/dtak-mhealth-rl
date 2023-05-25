@@ -33,28 +33,26 @@ if __name__ == "__main__":
     run_parallel = True
 
     # Set the number of subplots per row
-    cols = 7  # 5, 7, 9
+    cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 20  # 5, 10, 20
+    granularity = 30  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
-        "width": np.arange(5, 5 + cols),
-        "disengage_prob": np.linspace(
-            0.1, 0.9, cols
-        ),  # Need to make sure this plus below is < 1
+        "width": np.linspace(5, 11, cols).round().astype(int),
+        # Need to make sure this plus below is < 1
+        "disengage_prob": np.linspace(0.1, 0.9, cols),
         "lost_progress_prob": np.linspace(0.1, 0.7, cols),
         "goal_mag": np.linspace(4, 15, cols),
         "disengage_reward": np.linspace(-1, -10, cols),
-        "burden": np.linspace(-0.5, -3, cols),
+        "burden": np.linspace(-1, -4, cols),
     }
 
     rows = len(search_parameters)
-
     # === End of setup === #
 
     run_param_sweep(
@@ -70,4 +68,5 @@ if __name__ == "__main__":
         gammas=gammas,
         probs=probs,
         run_parallel=run_parallel,
+        filename="images/plots/parameter_pertubation_chain.pdf",
     )

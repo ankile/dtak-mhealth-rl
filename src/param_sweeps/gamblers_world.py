@@ -1,4 +1,7 @@
+from functools import partial
+
 import numpy as np
+
 from src.utils.param_sweep import run_param_sweep
 from src.utils.gamblers import make_gamblers_experiment, make_gamblers_transition
 
@@ -23,7 +26,9 @@ if __name__ == "__main__":
     """
 
     # === Set up the experiment === #
-    setup_name = "Gamblers World"
+    prob_to_vary = "C"  # "F"
+
+    setup_name = f"Gamblers World (p_{prob_to_vary})"
 
     run_parallel = True
 
@@ -51,8 +56,12 @@ if __name__ == "__main__":
         setup_name=setup_name,
         default_params=default_params,
         search_parameters=search_parameters,
-        create_experiment_func=make_gamblers_experiment,
-        transition_matrix_func=make_gamblers_transition,
+        create_experiment_func=partial(
+            make_gamblers_experiment, vary_continuation=prob_to_vary == "C"
+        ),
+        transition_matrix_func=partial(
+            make_gamblers_transition, vary_continuation=prob_to_vary == "C"
+        ),
         rows=rows,
         cols=cols,
         get_start_state=get_start_state,

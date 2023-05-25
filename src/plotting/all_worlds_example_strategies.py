@@ -137,8 +137,8 @@ def run_gamblers_finish(experiment, gammas: np.ndarray, probs: np.ndarray):
 experiments = {
     "Wall": {
         "p2idx": {
-            "Around": 0,
-            "Through": 1,
+            "Around Wall": 0,
+            "Through Wall": 1,
         },
         "experiment": make_wall_experiment(
             height=2,
@@ -151,9 +151,10 @@ experiments = {
     },
     "Cliff": {
         "p2idx": {
-            "Hug cliff": 0,
-            "Keep space": 1,
+            "Dangerous": 1,
+            "Safe": 0,
         },
+        "default": 1,
         "experiment": make_cliff_experiment(
             height=5,
             width=10,
@@ -162,11 +163,12 @@ experiments = {
         ),
         "run_func": run_cliff,
     },
-    "SmallBig": {
+    "Big-Small": {
         "p2idx": {
-            "Small reward": 0,
-            "Big reward": 1,
+            "Close small R": 1,
+            "Far large R": 0,
         },
+        "default": 1,
         "experiment": make_smallbig_experiment(
             height=7,
             width=7,
@@ -209,8 +211,8 @@ experiments = {
     },
     "Gambler's ($p_C$)": {
         "p2idx": {
-            "Continue": 1,
-            "Finish": 0,
+            "Continue": 0,
+            "Finish": 1,
         },
         "default": 1,
         "experiment": make_gamblers_experiment(
@@ -257,7 +259,7 @@ if __name__ == "__main__":
             continue
 
         pbar.set_description(f"Plotting {name} world")
-        fig, ax = plt.subplots(figsize=FIG_HALF_SIZE, sharey=not True, sharex=True)
+        fig, ax = plt.subplots(figsize=FIG_HALF_SIZE)
         # Adapt the p2idx names to something more descriptive
         p2idx = data["p2idx"]
 
@@ -277,7 +279,7 @@ if __name__ == "__main__":
             gammas=gammas,
             ax=ax,
             p2idx=p2idx,
-            title=f"{name} Strategy Map",
+            title=f"{name} behavior map",
             annot=False,
             ax_labels=True,
             num_ticks=3,
@@ -291,7 +293,7 @@ if __name__ == "__main__":
 
         # Save the figure
         fig.savefig(
-            f"images/plots/strategy_map_{name}.pdf",
+            f"images/plots/behavior_map_{name}.pdf",
             dpi=300,
             bbox_inches="tight",
         )

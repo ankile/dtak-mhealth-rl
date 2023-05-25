@@ -159,6 +159,9 @@ def run_param_sweep(
     get_realized_probs_indices: Callable | None = None,
     get_goal_states: Callable[[int, int], set] | None = None,
     run_parallel=False,
+    filename=None,
+    save_metadata=False,
+    show_plot=False,
 ):
     assert not (
         probs is not None and scalers is not None
@@ -193,6 +196,7 @@ def run_param_sweep(
     with OptionalPool(processes=n_processes) as pool:
         strategy_data = list(
             tqdm(
+                # pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 total=rows * cols,
                 desc=f"Running with cols={cols}, rows={rows}, granularity={granularity}",
@@ -205,11 +209,10 @@ def run_param_sweep(
     fig, axs = plt.subplots(
         nrows=rows,
         ncols=cols,
-        figsize=(round(2 * cols), round(2 * rows)),
+        figsize=(round(2 * cols), round(2.2 * rows)),
         sharex=True,
         sharey=True,
     )
-    fig.subplots_adjust(top=0.9)
 
     for (data, p2idx, param, value, realized_probs), ax in zip(
         strategy_data, axs.flatten()
@@ -223,42 +226,58 @@ def run_param_sweep(
             gammas=gammas,
             annot=False,
             ax_labels=False,
-            num_ticks=10,
+            num_ticks=5,
         )
 
-    # Shoow the full plot at the end
-    fig.suptitle(
-        f"{setup_name}:\n" + ", ".join(f"{k}={v}" for k, v in default_params.items())
+    # Show the full plot at the end
+    fig.suptitle(f"{setup_name} Equivalence Class Invariance\n")
+    fig.text(
+        0.5,
+        0.96,
+        "Default: " + ", ".join(f"{k}={v}" for k, v in default_params.items()),
+        size=8,
+        ha="center",
+        va="center",
+        style="italic",
     )
-    plt.tight_layout()
 
     # Set the x and y labels
     for ax in axs[-1]:
-        ax.set_xlabel("Gamma")
+        ax.set_xlabel(r"Discount factor $\gamma$")
     for ax in axs[:, 0]:
-        ax.set_ylabel("Prob")
+        ax.set_ylabel(r"Confidence level $p$")
 
     # Determine the output directory
     output_dir = init_outdir(setup_name)
 
+    plt.tight_layout()
     # Save the figure
     now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    fig.savefig(f"{output_dir}/{now}_vizualization.png", dpi=300)
+    if filename is None:
+        filename = f"{output_dir}/{now}_vizualization.png"
 
-    # Add metadata to the heatmap info
-    print("Saving metadata with length", len(strategy_data))
-    pickle_data = {
-        "strategy_data": strategy_data,
-        "grid_dimensions": (rows, cols),
-        "search_parameters": search_parameters,
-        "default_params": default_params,
-        "probs": probs,
-        "gammas": gammas,
-    }
+    fig.savefig(
+        filename,
+        dpi=300,
+        bbox_inches="tight",
+    )
 
-    # Save the heatmap info to file
-    with open(f"{output_dir}/{now}_metadata.pkl", "wb") as f:
-        pickle.dump(pickle_data, f)
+    if save_metadata:
+        # Add metadata to the heatmap info
+        print("Saving metadata with length", len(strategy_data))
+        pickle_data = {
+            "strategy_data": strategy_data,
+            "grid_dimensions": (rows, cols),
+            "search_parameters": search_parameters,
+            "default_params": default_params,
+            "probs": probs,
+            "gammas": gammas,
+        }
+
+        # Save the heatmap info to file
+        with open(f"{output_dir}/{now}_metadata.pkl", "wb") as f:
+            pickle.dump(pickle_data, f)  # type: ignore
 
     # Show the plot
-    plt.show()
+    if show_plot:
+        plt.show()
