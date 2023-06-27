@@ -4,3 +4,4 @@ __pycache__
 local_images
 *.log
 .vscode
+venv

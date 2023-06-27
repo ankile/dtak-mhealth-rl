@@ -12,7 +12,7 @@ from src.plotting.config import (
 )
 
 # Import function from `param_sweep.py` to run one experiment
-from src.utils.param_sweep import run_experiment
+from src.utils.param_sweep import ExperimentResult, run_experiment
 from src.utils.small_big import make_smallbig_experiment
 from src.utils.transition_matrix import id_func
 from src.visualization.strategy import make_general_strategy_heatmap
@@ -36,9 +36,13 @@ from src.utils.chain import make_chain_experiment, make_chain_transition
 import src.param_sweeps.riverswim_world as riverswim_world
 from src.utils.riverswim import make_riverswim_experiment, make_riverswim_transition
 
-# Import config functions for the gamblers experiment
+# Import config functions for the Gambler's experiment
 import src.param_sweeps.gamblers_world as gamblers_world
 from src.utils.gamblers import make_gamblers_experiment, make_gamblers_transition
+
+# Import config functions for the Cafe experiment
+import src.param_sweeps.cafe_world as cafe_world
+from src.utils.cafe import make_cafe_experiment, make_cafe_transition
 
 
 def run_wall(experiment, gammas: np.ndarray, probs: np.ndarray):
@@ -54,7 +58,7 @@ def run_wall(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_cliff(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_cliff(experiment, gammas: np.ndarray, probs: np.ndarray) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -67,7 +71,7 @@ def run_cliff(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_smallbig(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_smallbig(experiment, gammas: np.ndarray, probs: np.ndarray) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -80,7 +84,7 @@ def run_smallbig(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_chain(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_chain(experiment, gammas: np.ndarray, probs: np.ndarray) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -93,7 +97,9 @@ def run_chain(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_riverswim(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_riverswim(
+    experiment, gammas: np.ndarray, probs: np.ndarray
+) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -106,7 +112,9 @@ def run_riverswim(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_gamblers_cont(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_gamblers_cont(
+    experiment, gammas: np.ndarray, probs: np.ndarray
+) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -119,7 +127,9 @@ def run_gamblers_cont(experiment, gammas: np.ndarray, probs: np.ndarray):
     )
 
 
-def run_gamblers_finish(experiment, gammas: np.ndarray, probs: np.ndarray):
+def run_gamblers_finish(
+    experiment, gammas: np.ndarray, probs: np.ndarray
+) -> ExperimentResult:
     h, w = experiment.height, experiment.width
 
     return run_experiment(
@@ -131,6 +141,19 @@ def run_gamblers_finish(experiment, gammas: np.ndarray, probs: np.ndarray):
         gammas=gammas,
         probs=probs,
         start_state=gamblers_world.get_start_state(h, w),
+    )
+
+
+def run_cafe(experiment, gammas: np.ndarray, probs: np.ndarray) -> ExperimentResult:
+    h, w = experiment.height, experiment.width
+
+    return run_experiment(
+        experiment,
+        transition_matrix_func=make_cafe_transition,
+        params=cafe_world.default_params,
+        gammas=gammas,
+        probs=probs,
+        start_state=cafe_world.get_start_state(h, w),
     )
 
 
@@ -241,6 +264,21 @@ experiments = {
         ),
         "run_func": run_gamblers_finish,
     },
+    "Cafe": {
+        "p2idx": {
+            "Donut": 1,
+            "Vegan/Noodle": 0,
+        },
+        "default": 1,
+        "experiment": make_cafe_experiment(
+            prob=0.8,
+            gamma=0.9,
+            vegetarian_reward=200,
+            donut_reward=50,
+            noodle_reward=100,
+        ),
+        "run_func": run_cafe,
+    },
 }
 
 
@@ -279,7 +317,7 @@ if __name__ == "__main__":
             gammas=gammas,
             ax=ax,
             p2idx=p2idx,
-            title=f"{name} behavior map",
+            title=f"{name} Map",
             annot=False,
             ax_labels=True,
             num_ticks=3,
@@ -290,6 +328,9 @@ if __name__ == "__main__":
 
         # Make it so that the figure and the axes labels are not cut off
         plt.tight_layout()
+
+        # Show the figure
+        # plt.show()
 
         # Save the figure
         fig.savefig(

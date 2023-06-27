@@ -197,7 +197,6 @@ def run_param_sweep(
     with OptionalPool(processes=n_processes) as pool:
         strategy_data = list(
             tqdm(
-                # pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 pool.imap(run_one_world_partial, param_generator(search_parameters)),
                 total=rows * cols,
                 desc=f"Running {setup_name} with cols={cols}, rows={rows}, granularity={granularity}, cores={n_processes}",
