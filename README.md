@@ -1,4 +1,4 @@
-# Learning User Agent Impairments from Behavior Observation and Inverse Reinforcement Learning
+# Discovering User Types: _Mapping User Traits by Task-Specific Behaviors in Reinforcement Learning_
 
-> A DtaK project at Harvard University in Spring 2023.
+Source code for experiments for workshop paper at ICML 2023.
 
