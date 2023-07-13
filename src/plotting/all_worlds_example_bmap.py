@@ -297,7 +297,7 @@ if __name__ == "__main__":
             continue
 
         pbar.set_description(f"Plotting {name} world")
-        fig, ax = plt.subplots(figsize=FIG_HALF_SIZE)
+        fig, ax = plt.subplots(figsize=(6, 3))
         # Adapt the p2idx names to something more descriptive
         p2idx = data["p2idx"]
 
@@ -324,6 +324,7 @@ if __name__ == "__main__":
             title_fontsize=FIG_TITLE_FONT_SIZE,
             legend_fontsize=FIG_LEGEND_FONT_SIZE,
             tick_fontsize=FIG_AXIS_FONT_SIZE,
+            square=False
         )
 
         # Make it so that the figure and the axes labels are not cut off
@@ -334,7 +335,7 @@ if __name__ == "__main__":
 
         # Save the figure
         fig.savefig(
-            f"images/plots/behavior_map_{name}.pdf",
+            f"images/plots/behavior_map_{name}.png",
             dpi=300,
             bbox_inches="tight",
         )

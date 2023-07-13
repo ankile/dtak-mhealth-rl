@@ -9,18 +9,6 @@ def get_start_state(height, width):
     return (height - 1) * width
 
 
-default_params = {
-    "height": 5,
-    "width": 9,
-    "reward_mag": 1e2,
-    "neg_mag": -1e8,
-    "latent_reward": 0,
-    # These are off by default because they turn the world into a compound world
-    # "disengage_reward": 0,
-    # "allow_disengage": False,
-    # "small_r_mag": 0,
-}
-
 
 def perform_sweep(filename=None):
     # === Start of setup === #
@@ -31,6 +19,22 @@ def perform_sweep(filename=None):
     # Set the number of subplots per row
     cols = 4  # 5, 7, 9
 
+    # Define the default parameters
+    default_params = {
+        "height": 5,
+        "width": 9,
+        "reward_mag": 1e2,
+        "neg_mag": -1e8,
+        "latent_reward": 0,
+    }
+
+    # Define the search space
+    search_parameters = {
+        "width": np.linspace(4, 10, cols).round().astype(int),
+        "height": np.linspace(4, 10, cols).round().astype(int),
+        "reward_mag": np.linspace(100, 500, cols),
+    }
+
     # Set the number of scales and gammas to use
     granularity = 20  # 5, 10, 20
 
@@ -38,17 +42,6 @@ def perform_sweep(filename=None):
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
-    search_parameters = {
-        "width": np.linspace(4, 10, cols).round().astype(int),
-        "height": np.linspace(4, 10, cols).round().astype(int),
-        "reward_mag": np.linspace(100, 500, cols),
-        # The rest of these are not interesting to change for different reasons
-        # "small_r_mag": np.linspace(100, 300, cols).round().astype(int),
-        # "neg_mag": np.linspace(-20, 0, cols),
-        # "latent_reward": np.linspace(-3, 0, cols),
-        # "disengage_reward": np.linspace(0, 10, cols),
-        # "prob": np.linspace(0.5, 0.95, cols),  # Don't search over prob
-    }
 
     rows = len(search_parameters)
     # === End of setup === #

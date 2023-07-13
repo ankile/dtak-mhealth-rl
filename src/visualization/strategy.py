@@ -22,6 +22,7 @@ def make_general_strategy_heatmap(
     legend_fontsize=5,
     tick_fontsize=8,
     legend=True,
+    square=True,
 ) -> None:
     make_strategy_heatmap(
         results,
@@ -34,6 +35,7 @@ def make_general_strategy_heatmap(
         num_ticks=num_ticks,
         title_fontsize=title_fontsize,
         tick_fontsize=tick_fontsize,
+        square=square,
     )
 
     # Create legend patches
@@ -56,6 +58,7 @@ def make_strategy_heatmap(
     num_ticks=10,
     title_fontsize=8,
     tick_fontsize=8,
+    square=True,
 ) -> None:
     # compute the indices to use for the tick labels
     gamma_indices = np.round(np.linspace(0, len(gammas) - 1, num_ticks)).astype(int)
@@ -73,7 +76,7 @@ def make_strategy_heatmap(
         fmt="d",
         ax=ax,
         cbar=False,
-        square=True,
+        square=square,
         vmax=10,
     )
 
