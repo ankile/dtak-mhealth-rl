@@ -52,14 +52,14 @@ class MDP_2D:
         for action in self.A:
             transition_probs = np.array(self.T[action][state])
 
-            # Set transition probabilities to zero for invalid actions
-            if (
-                (col == 0 and action == 0)
-                or (col == self.width - 1 and action == 1)
-                or (row == 0 and action == 2)
-                or (row == self.height - 1 and action == 3)
-            ):
-                transition_probs = np.zeros_like(transition_probs)
+            # # Set transition probabilities to zero for invalid actions
+            # if (
+            #     (col == 0 and action == 0)
+            #     or (col == self.width - 1 and action == 1)
+            #     or (row == 0 and action == 2)
+            #     or (row == self.height - 1 and action == 3)
+            # ):
+            #     transition_probs = np.zeros_like(transition_probs)
 
             rewards = np.array(self.R[state][action])
             vals[action] = np.sum(
