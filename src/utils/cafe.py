@@ -160,6 +160,7 @@ def make_cafe_experiment(
     experiment = Experiment_2D(
         height=13,
         width=8,
+        action_success_prob=prob,
         gamma=gamma,
         rewards_dict=cafe_dict,
         transition_mode=TransitionMode.FULL,
@@ -179,10 +180,10 @@ def make_cafe_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.05,
-        "gamma": 0.70,
-        "vegetarian_reward": 2000,
-        "donut_reward": 2000,
+        "prob": 0.9,
+        "gamma": 0.8,
+        "vegetarian_reward": 100,
+        "donut_reward": 50,
         "noodle_reward": 0,
     }
 
