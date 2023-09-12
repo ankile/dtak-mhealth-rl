@@ -203,6 +203,23 @@ class Experiment_2D:
         gamma=0.9,
         transition_mode: TransitionMode = TransitionMode.SIMPLE,
     ):
+        # Assert valid parameters
+        assert 0 <= action_success_prob <= 1, "Action success probability must be in [0, 1]"
+        assert 0 <= gamma <= 1, "Gamma must be in [0, 1]"
+        assert (
+            transition_mode in TransitionMode
+        ), f"Transition mode must be one of {TransitionMode}"
+        assert (
+            0 <= len(rewards_dict) <= height * width
+        ), "Number of rewards must be in [0, height * width]"
+        assert (
+            type(height) == int and type(width) == int
+        ), "Height and width must be integers"
+        assert (
+            height > 0 and width > 0
+        ), "Height and width must be positive integers"
+        
+
         self.height = height
         self.width = width
         self.gamma = gamma
