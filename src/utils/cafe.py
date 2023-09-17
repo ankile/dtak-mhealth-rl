@@ -138,8 +138,16 @@ def make_cafe_transition(T, prob, **kwargs) -> np.ndarray:
             T_new[action][state][non_zero & off_path] = 0
 
             # normalize probabilities for the current action to sum to 1
-            T_new[action][state] /= np.sum(T_new[action][state])
-
+            total_prob = np.sum(T_new[action][state])
+            if total_prob > 0:
+                T_new[action][state] /= total_prob
+            elif total_prob == 0:
+                T_new[action][state][state] = 1
+            else:
+                raise ValueError(
+                    f"Total probability is negative: {total_prob}"
+                )
+            
     return T_new
 
 

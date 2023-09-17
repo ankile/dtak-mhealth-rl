@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Callable
+from typing import Callable, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +9,58 @@ from src.utils.enums import TransitionMode
 from src.utils.pessimism import apply_pessimism_to_transition
 
 from src.utils.transition_matrix import make_absorbing, transition_matrix_is_valid
+
+from numba import njit
+
+
+@njit
+def bellman_eq(
+    A: np.ndarray,
+    V: np.ndarray,
+    R: np.ndarray,
+    T: np.ndarray,
+    gamma: float,
+    width: int,
+    row: int,
+    col: int,
+) -> np.ndarray:
+    state = row * width + col
+    vals = np.zeros(len(A))
+
+    for action in A:
+        transition_probs = T[action][state]
+        rewards = R[state][action]
+        vals[action] = np.sum(transition_probs * (rewards + gamma * V.flatten()))
+
+    return vals
+
+
+@njit
+def value_iteration(
+    V: np.ndarray,
+    policy: np.ndarray,
+    S: np.ndarray,
+    A: np.ndarray,
+    T: np.ndarray,
+    R: np.ndarray,
+    gamma: float,
+    theta: float,
+    width: int,
+) -> Tuple[np.ndarray, np.ndarray]:
+    difference = np.inf
+    while difference >= theta:
+        difference = 0
+        for state in S.flatten():
+            row, col = state // width, state % width
+            old_V = V[row, col]
+            v = bellman_eq(A, V, R, T, gamma, width, row, col)
+
+            policy[row, col] = np.argmax(v)
+            V[row, col] = np.max(v)
+
+            difference = np.maximum(difference, np.abs(old_V - V[row, col]))
+
+    return V, policy
 
 
 class MDP_2D:
@@ -44,43 +96,6 @@ class MDP_2D:
             len(self.A),
             self.height * self.width,
         )  # state x action x next_state
-
-    def bellman_eq(self, row, col):
-        state = row * self.width + col
-        vals = np.zeros(len(self.A))
-
-        for action in self.A:
-            transition_probs = np.array(self.T[action][state])
-
-            # Set transition probabilities to zero for invalid actions
-            if (
-                (col == 0 and action == 0)
-                or (col == self.width - 1 and action == 1)
-                or (row == 0 and action == 2)
-                or (row == self.height - 1 and action == 3)
-            ):
-                transition_probs = np.zeros_like(transition_probs)
-
-            rewards = np.array(self.R[state][action])
-            vals[action] = np.sum(
-                transition_probs * (rewards + self.gamma * self.V.flatten())
-            )
-
-        return vals
-
-    def value_iteration(self):
-        difference = np.inf
-        while difference >= self.theta:
-            difference = 0
-            for state in self.S.flatten():
-                row, col = state // self.width, state % self.width
-                old_V = self.V[row, col]
-                v = self.bellman_eq(row, col)
-
-                self.policy[row, col] = np.argmax(v)
-                self.V[row, col] = np.max(v)
-
-                difference = np.maximum(difference, np.abs(old_V - self.V[row, col]))
 
     def make_heatmap(
         self,
@@ -130,7 +145,19 @@ class MDP_2D:
         base_dir="images",
         label_precision=3,
     ):
-        self.value_iteration()
+        # Run value iteration
+        self.V, self.policy = value_iteration(
+            self.V,
+            self.policy,
+            self.S,
+            self.A,
+            self.T,
+            self.R,
+            self.gamma,
+            self.theta,
+            self.width,
+        )
+
         precision = label_precision
 
         arrows = ["\u2190", "\u2192", "\u2191", "\u2193"]
@@ -176,6 +203,23 @@ class Experiment_2D:
         gamma=0.9,
         transition_mode: TransitionMode = TransitionMode.SIMPLE,
     ):
+        # Assert valid parameters
+        assert 0 <= action_success_prob <= 1, "Action success probability must be in [0, 1]"
+        assert 0 <= gamma <= 1, "Gamma must be in [0, 1]"
+        assert (
+            transition_mode in TransitionMode
+        ), f"Transition mode must be one of {TransitionMode}"
+        assert (
+            0 <= len(rewards_dict) <= height * width
+        ), "Number of rewards must be in [0, height * width]"
+        assert (
+            type(height) == int and type(width) == int
+        ), "Height and width must be integers"
+        assert (
+            height > 0 and width > 0
+        ), "Height and width must be positive integers"
+        
+
         self.height = height
         self.width = width
         self.gamma = gamma
