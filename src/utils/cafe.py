@@ -180,7 +180,7 @@ def make_cafe_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.9,
+        "prob": 1,
         "gamma": 0.8,
         "vegetarian_reward": 100,
         "donut_reward": 50,
