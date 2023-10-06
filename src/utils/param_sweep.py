@@ -161,7 +161,7 @@ def run_param_sweep(
     run_parallel=False,
     filename=None,
     save_metadata=False,
-    show_plot=False,
+    show_plot=True,
     subtitle_location=0.95,
     p2idx_override=None,
     idx_map=None,

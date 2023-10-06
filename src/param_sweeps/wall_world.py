@@ -10,10 +10,14 @@ def get_start_state(height, width):
 
 # Setting the parameters
 default_params = dict(
-    height=4,
-    width=6,
-    neg_mag=-10,
+    prob=0.72,
+    gamma=0.89,
+    height=5,
+    width=7,
+    neg_mag=-15,
     reward_mag=200,
+    small_r_mag=20,
+    latent_reward=0,
 )
 
 
@@ -27,7 +31,7 @@ def perform_sweep(filename=None):
     cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 20  # 5, 10, 20
+    granularity = 5  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.4, 0.99, granularity)
