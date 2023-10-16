@@ -9,11 +9,11 @@
 
 If you're authorizing the `git` cli with an app password, you can use HTTPS:
 
-`git clone https://github.com/ankile/discovering-user-types.git`
+`git clone https://github.com/ankile/dtak-mhealth-rl.git`
 
 Otherwise, SSH is probably advisable:
 
-`git clone git@github.com:ankile/discovering-user-types.git`
+`git clone git@github.com:ankile/dtak-mhealth-rl.git`
 
 
 **Make a virtual environment**
