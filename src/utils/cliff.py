@@ -92,6 +92,8 @@ def make_cliff_transition(
 
 
 def make_cliff_experiment(
+    prob,
+    gamma,
     height,
     width,
     reward_mag,
@@ -121,7 +123,9 @@ def make_cliff_experiment(
     experiment = Experiment_2D(
         height,
         width,
+        action_success_prob=prob,
         rewards_dict=cliff_dict,
+        gamma=gamma,
         transition_mode=TransitionMode.FULL,
     )
 
@@ -139,13 +143,13 @@ def make_cliff_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.72,
-        "gamma": 0.89,
-        "height": 3,
+        "prob": 0.74,
+        "gamma": 0.96,
+        "height": 4,
         "width": 8,
-        "reward_mag": 1e2,
-        "small_r_mag": 0,  # small_mag of 0 = normal cliff world
-        "neg_mag": -1e2,
+        "reward_mag": 5e2,
+        "small_r_mag": 200,  # small_mag of 0 = normal cliff world
+        "neg_mag": -1e8,
         "latent_reward": -1,
         "disengage_reward": None,
         "allow_disengage": False,

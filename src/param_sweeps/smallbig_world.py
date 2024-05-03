@@ -10,10 +10,13 @@ def get_start_state(height, width):
 
 # Setting the parameters
 default_params = dict(
+    prob=0.8,
+    gamma=0.9,
     height=7,
     width=7,
     big_reward=300,
-    small_reward_frac=0.5,
+    small_reward=100,
+    latent_reward=0,
 )
 
 
@@ -53,8 +56,8 @@ def perform_sweep(filename=None):
         # `cols` number of consecutive integers centered around the default value
         "height": np.linspace(3, 11, cols).round().astype(int),
         "width": np.linspace(3, 11, cols).round().astype(int),
-        "big_reward": np.linspace(100, 400, cols),
-        "small_reward_frac": np.linspace(0.05, 0.8, cols),
+        "big_reward": np.linspace(300, 600, cols),
+        "small_reward": np.linspace(50, 200, cols),
     }
 
     rows = len(search_parameters)
@@ -74,11 +77,13 @@ def perform_sweep(filename=None):
         probs=probs,
         run_parallel=run_parallel,
         subtitle_location=0.95,
-        p2idx_override={
-            "Close small R": 1,
-            "Far large R": 0,
-        },
-        idx_map={0: 1, 1: 0},
+        # p2idx_override={
+        #     "Close small R": 1,
+        #     "Far large R": 0,
+        # },
+        p2idx_override=None,
+        # idx_map={0: 1, 1: 0},
+        idx_map=None,
         filename=filename,
     )
 

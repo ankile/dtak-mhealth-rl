@@ -27,9 +27,9 @@ def wall_reward(
     reward_dict = {}
     for i in range(height * width):
         reward_dict[i] = latent_cost  # add latent cost
-    wall_end_x = width - 1
-    wall_begin_x = wall_end_x - wall_width
-    wall_end_y = wall_height
+    wall_end_x = width - 2
+    wall_begin_x = wall_end_x - wall_width +2
+    wall_end_y = wall_height-1
     wall_begin_y = 0
     for i in range(wall_begin_x, wall_end_x):
         for j in range(wall_begin_y, wall_end_y):
@@ -37,7 +37,8 @@ def wall_reward(
     reward_dict[width - 1] = reward_mag
 
     # COMPOSITION: Adding a small reward along the path
-    reward_dict[height * width - (width * 3) // 2 - 1] = small_r_mag
+    print("str", height * width - 3 - 2*width)
+    reward_dict[height * width - 3 - 2*width] = small_r_mag
     # reward_dict[width*(height-1)] = small_r_mag
 
     return reward_dict
@@ -52,8 +53,6 @@ def make_wall_experiment(
     reward_mag,
     small_r_mag,
     latent_reward=0,
-    disengage_reward=0,
-    allow_disengage=False,
 ) -> Experiment_2D:
     wall_dict = wall_reward(
         height,
@@ -69,8 +68,10 @@ def make_wall_experiment(
     experiment = Experiment_2D(
         height,
         width,
+        action_success_prob=prob,
         rewards_dict=wall_dict,
-        transition_mode=TransitionMode.SIMPLE,
+        transition_mode=TransitionMode.FULL,
+        gamma=gamma,
     )
 
     return experiment
@@ -78,16 +79,14 @@ def make_wall_experiment(
 
 if __name__ == "__main__":
     params = {
-        "prob": 0.85,
-        "gamma": 0.92,
+        "prob": 0.4,
+        "gamma": 0.993,
         "height": 5,
         "width": 7,
         "reward_mag": 500,
-        "small_r_mag": 50,  # small_mag of 0 = normal cliff world
-        "neg_mag": -30,
+        "small_r_mag": 100,  # small_mag of 0 = normal cliff world
+        "neg_mag": -50,
         "latent_reward": 0,
-        "disengage_reward": None,
-        "allow_disengage": False,
     }
 
     experiment = make_wall_experiment(**params)
@@ -123,12 +122,6 @@ if __name__ == "__main__":
 
     # Create a mask for the bottom row if the user is allowed to disengage
     mask = None
-    if params["allow_disengage"]:
-        mask = np.zeros(
-            (params["height"] + int(params["allow_disengage"]), params["width"])
-        )
-        mask[-1, :] = 1
-
     plot_world_reward(experiment, setup_name="Wall-Smallbig", ax=ax2, show=False, mask=mask)
 
     experiment.mdp.solve(

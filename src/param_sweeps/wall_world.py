@@ -31,14 +31,14 @@ def perform_sweep(filename=None):
     cols = 4  # 5, 7, 9
 
     # Set the number of scales and gammas to use
-    granularity = 5  # 5, 10, 20
+    granularity = 20  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.4, 0.99, granularity)
     gammas = np.linspace(0.4, 0.99, granularity)
 
     search_parameters = {
-        "height": np.linspace(2, 5, cols).round().astype(int),
+        "height": np.linspace(5, 5, cols).round().astype(int),
         "width": np.linspace(5, 8, cols).round().astype(int),
         "reward_mag": np.linspace(100, 250, cols),
         "neg_mag": np.linspace(-20, -10, cols),

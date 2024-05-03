@@ -47,6 +47,8 @@ def value_iteration(
     theta: float,
     width: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
+    V_secondary = np.zeros(V.shape)
+    policy_secondary = np.zeros(policy.shape)
     difference = np.inf
     while difference >= theta:
         difference = 0
@@ -54,13 +56,17 @@ def value_iteration(
             row, col = state // width, state % width
             old_V = V[row, col]
             v = bellman_eq(A, V, R, T, gamma, width, row, col)
-
             policy[row, col] = np.argmax(v)
             V[row, col] = np.max(v)
 
-            difference = np.maximum(difference, np.abs(old_V - V[row, col]))
+            # Keep track of secondary values and policies
+            v[int(policy[row, col])] = -np.inf
+            policy_secondary[row, col] = np.argmax(v)
+            V_secondary[row, col] = np.max(v)
+            v[int(policy[row, col])] = V[row, col]
 
-    return V, policy
+            difference = np.maximum(difference, np.abs(old_V - V[row, col]))
+    return V, policy, V_secondary, policy_secondary
 
 
 class MDP_2D:
@@ -76,7 +82,7 @@ class MDP_2D:
 
         self.V = np.zeros(self.S.shape)
         self.policy = np.zeros(self.S.shape)
-        self.theta = 0.0001
+        self.theta = 0.0000000000001
         self.state = self.S[0][0]
 
         # sanity checks:
@@ -146,7 +152,7 @@ class MDP_2D:
         label_precision=3,
     ):
         # Run value iteration
-        self.V, self.policy = value_iteration(
+        self.V, self.policy, self.V_secondary, self.policy_secondary = value_iteration(
             self.V,
             self.policy,
             self.S,
@@ -170,7 +176,9 @@ class MDP_2D:
                     row, col = state // self.width, state % self.width
                     policy = self.policy[row][col].astype(int)
                     value = self.V[row][col]
-                    grid_row.append(f"{arrows[policy]}\n{value:.{precision}f}")
+                    policy_secondary = self.policy_secondary[row][col].astype(int)
+                    value_secondary = self.V_secondary[row][col]
+                    grid_row.append(f"{arrows[policy]}\n{value:.{precision}f}\n{arrows[policy_secondary]}\n{value_secondary:.{precision}f}")
                 grid.append(grid_row)
 
             labels = np.array(grid)
@@ -203,7 +211,6 @@ class Experiment_2D:
         gamma=0.9,
         transition_mode: TransitionMode = TransitionMode.SIMPLE,
     ):
-
         # Assert valid parameters
         assert 0 <= action_success_prob <= 1, "Action success probability must be in [0, 1]"
         assert 0 <= gamma <= 1, "Gamma must be in [0, 1]"
