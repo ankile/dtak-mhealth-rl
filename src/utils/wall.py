@@ -37,7 +37,6 @@ def wall_reward(
     reward_dict[width - 1] = reward_mag
 
     # COMPOSITION: Adding a small reward along the path
-    print("str", height * width - 3 - 2*width)
     reward_dict[height * width - 3 - 2*width] = small_r_mag
     # reward_dict[width*(height-1)] = small_r_mag
 
