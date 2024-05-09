@@ -196,6 +196,24 @@ class MDP_2D:
                 )
 
         return self.V, self.policy
+    
+    def policy_callback(self):
+        '''
+        Returns 2D array (row by col) denoting policy (0, 1, 2, or 3) per state.
+        '''
+        _, policy_solved, _, _ = value_iteration(
+            self.V,
+            self.policy,
+            self.S,
+            self.A,
+            self.T,
+            self.R,
+            self.gamma,
+            self.theta,
+            self.width,
+        )
+        
+        return policy_solved.astype(int)
 
     def reset(self):
         self.state = self.S[0][0]
