@@ -128,86 +128,13 @@ def unroll_policy_dict(policy):
     return seq_states
 
 if __name__ == "__main__":
-    # Input validation
-    if len(sys.argv) != 2:
-        raise ValueError("Must specify type of world")
-    
-    world_type = sys.argv[1]
-    if world_type not in ["wall", "smallbig", "cliff"]:
-        raise ValueError("Invalid world type")
-    
-    # Create the worlds
-    gammas = np.linspace(0.01, 0.999, 30)
-    probs = np.linspace(0.01, 0.999, 30)
 
-    policy_list = []
+    # Start with the four corners
+    policies = [solve(corner 1), solve(corner 2), solve(corner 3), solve(corner 4)]
 
-    if world_type == "wall":
-        height = 5
-        width = 7
-        for gamma in gammas:
-            for prob in probs:
-                print(gamma, prob)
-                experiment = make_wall_experiment(
-                    prob=prob,
-                    gamma=gamma,
-                    height=height,
-                    width=width,
-                    reward_mag=500,
-                    small_r_mag=100,
-                    neg_mag=-50,
-                    latent_reward=0,
-                )
+    while num_of_policies_tested < 30:
+        # choose next policy to test given the results of the previous policies
+        # add new policy to this list
 
-                policy = experiment.mdp.policy_callback()
-                print(policy)
-                optimal_path = optimal_policy_callback(policy, 0, [width-1, height * width - 3 - 2*width], 5, 7)
-                policy_list.append(optimal_path)
-        
-    elif world_type == "smallbig":
-        height = 30
-        width = 30
-        for gamma in gammas:
-            for prob in probs:
-                print("Cur Gamma:", gamma, "Cur Prob:", prob)
-                experiment = make_smallbig_experiment(
-                    prob=prob,
-                    gamma=gamma,
-                    height=height,
-                    width=width,
-                    big_reward=300,
-                    small_reward=100,
-                    latent_reward=0,
-                )
-
-                policy = experiment.mdp.policy_callback()
-                # optimal_path = optimal_policy_callback(policy, 0, [width*(height-1), height*width-1], height, width)
-                optimal_path = optimal_policy_callback(policy, 11*width+11, [18*width+11, 18*width+18], height, width)
-                policy_list.append(optimal_path)
-
-    elif world_type == "cliff":
-        height = 5
-        width = 9
-        for gamma in gammas:
-            for prob in probs:
-                experiment = make_cliff_experiment(
-                    prob=prob,
-                    gamma=gamma,
-                    height=height,
-                    width=width,
-                    reward_mag=1e2,
-                    neg_mag=-1e8,
-                    latent_reward=0,
-                )
-
-                policy = experiment.mdp.policy_callback()
-                optimal_path = optimal_policy_callback(policy, 0, [height*width-1], 5, 9)
-                policy_list.append(optimal_path)
-    # print set of unique optimal paths
-    unique_policies = unique_dicts(policy_list)
-    print("OPTIMAL PATHS:")
-    for path in unique_policies:
-        print(unroll_policy_dict(path))
-
-    print("FINAL TREE:", combined_policies(policy_list))
-    combined_viz(combined_policies(policy_list), height, width)
+    combined = combined_policies(policies)
+    visualize policies    

@@ -148,7 +148,7 @@ if __name__ == "__main__":
         "height": 4,
         "width": 8,
         "reward_mag": 5e2,
-        "small_r_mag": 200,  # small_mag of 0 = normal cliff world
+        "small_r_mag": 10000,  # small_mag of 0 = normal cliff world
         "neg_mag": -1e8,
         "latent_reward": -1,
         "disengage_reward": None,

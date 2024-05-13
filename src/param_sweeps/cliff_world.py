@@ -36,7 +36,7 @@ def perform_sweep(filename=None):
     }
 
     # Set the number of scales and gammas to use
-    granularity = 20  # 5, 10, 20
+    granularity = 10  # 5, 10, 20
 
     # Set up parameters to search over
     probs = np.linspace(0.4, 0.99, granularity)
