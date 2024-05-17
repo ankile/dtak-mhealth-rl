@@ -137,16 +137,33 @@ if __name__ == "__main__":
         raise ValueError("Invalid world type")
     
     # Create the worlds
-    gammas = np.linspace(0.01, 0.999, 30)
-    probs = np.linspace(0.01, 0.999, 30)
+    # gammas = np.linspace(0.01, 0.999, 30)
+    # probs = np.linspace(0.01, 0.999, 30)
+    # gammas = [0.4,0.99]
+    # probs = [0.4, 0.99]
+    
+    #bottom = [[0.4,0.4], [0.5,0.4], [0.6,0.4],[0.7,0.4], [0.8,0.4],[0.9,0.4],[0.99,0.4]]
+    #top = [[0.4,0.99], [0.5,0.99], [0.6,0.99],[0.7,0.99], [0.8,0.99],[0.9,0.99],[0.99,0.99]]
+    #left = [[0.4,0.4], [0.4,0.5], [0.4,0.6],[0.4,0.7], [0.4,0.8],[0.4,0.9],[0.4,0.99]]
+    #right = [[0.99,0.4], [0.99,0.5], [0.99,0.6],[0.99,0.7], [0.99,0.8],[0.99,0.9],[0.99,0.99]]
+
+    bottom = [[0.4,0.4],[0.6,0.4],[0.8,0.4],[0.99,0.4]]
+    top = [[0.4,0.99],[0.6,0.99],[0.8,0.99],[0.99,0.99]]
+    left = [[0.4,0.4],[0.4,0.6],[0.4,0.8],[0.4,0.99]]
+    right = [[0.99,0.4],[0.99,0.6],[0.99,0.8], [0.99,0.99]]
+
+    sides = [bottom, top, left, right]
 
     policy_list = []
+    new_path_dict = {}
 
     if world_type == "wall":
         height = 5
         width = 7
-        for gamma in gammas:
-            for prob in probs:
+        for side in sides:
+            for elem in side:
+                gamma = elem[0]
+                prob = elem[1]
                 print(gamma, prob)
                 experiment = make_wall_experiment(
                     prob=prob,
@@ -160,16 +177,19 @@ if __name__ == "__main__":
                 )
 
                 policy = experiment.mdp.policy_callback()
-                print(policy)
                 optimal_path = optimal_policy_callback(policy, 0, [width-1, height * width - 3 - 2*width], 5, 7)
                 policy_list.append(optimal_path)
+                new_path_dict[(gamma,prob)] = unroll_policy_dict(optimal_path)
+
         
     elif world_type == "smallbig":
-        height = 30
-        width = 30
-        for gamma in gammas:
-            for prob in probs:
-                print("Cur Gamma:", gamma, "Cur Prob:", prob)
+        height = 7
+        width = 7
+        for side in sides:
+            for elem in side:
+                gamma = elem[0]
+                prob = elem[1]
+                print(gamma, prob)
                 experiment = make_smallbig_experiment(
                     prob=prob,
                     gamma=gamma,
@@ -181,15 +201,19 @@ if __name__ == "__main__":
                 )
 
                 policy = experiment.mdp.policy_callback()
-                # optimal_path = optimal_policy_callback(policy, 0, [width*(height-1), height*width-1], height, width)
-                optimal_path = optimal_policy_callback(policy, 11*width+11, [18*width+11, 18*width+18], height, width)
+                optimal_path = optimal_policy_callback(policy, 0, [width*(height-1), height*width-1], height, width)
+                # optimal_path = optimal_policy_callback(policy, 11*width+11, [18*width+11, 18*width+18], height, width)
                 policy_list.append(optimal_path)
+                new_path_dict[(gamma,prob)] = unroll_policy_dict(optimal_path)
 
     elif world_type == "cliff":
         height = 5
         width = 9
-        for gamma in gammas:
-            for prob in probs:
+        for side in sides:
+            for elem in side:
+                gamma = elem[0]
+                prob = elem[1]
+                print(gamma, prob)
                 experiment = make_cliff_experiment(
                     prob=prob,
                     gamma=gamma,
@@ -203,11 +227,44 @@ if __name__ == "__main__":
                 policy = experiment.mdp.policy_callback()
                 optimal_path = optimal_policy_callback(policy, 0, [height*width-1], 5, 9)
                 policy_list.append(optimal_path)
+                new_path_dict[(gamma,prob)] = unroll_policy_dict(optimal_path)
     # print set of unique optimal paths
     unique_policies = unique_dicts(policy_list)
-    print("OPTIMAL PATHS:")
-    for path in unique_policies:
-        print(unroll_policy_dict(path))
 
-    print("FINAL TREE:", combined_policies(policy_list))
     combined_viz(combined_policies(policy_list), height, width)
+
+    for side in sides:
+        i = 0
+        while i < (len(side) - 1):
+            print(side[i], side[i+1])
+            print(i, len(side))
+            if new_path_dict[(side[i][0],side[i][1])] != new_path_dict[(side[i+1][0],side[i+1][1])]:
+                print("Different")
+                gamma = (side[i][0] + side[i+1][0])/2
+                prob = (side[i][1] + side[i+1][1])/2
+                height = 5
+                width = 7
+                experiment = make_wall_experiment(
+                    prob=prob,
+                    gamma=gamma,
+                    height=height,
+                    width=width,
+                    reward_mag=500,
+                    small_r_mag=100,
+                    neg_mag=-50,
+                    latent_reward=0,
+                )
+                policy = experiment.mdp.policy_callback()
+                optimal_path = optimal_policy_callback(policy, 0, [width-1, height * width - 3 - 2*width], 5, 7)
+                if optimal_path in policy_list or optimal_path == {}:
+                    print("Already in List")
+                else:
+                    side.append([gamma, prob])
+                    side.sort()
+                    i -= 1
+                policy_list.append(optimal_path)
+                new_path_dict[(gamma,prob)] = unroll_policy_dict(optimal_path)
+                unique_policies = unique_dicts(policy_list)
+
+                combined_viz(combined_policies(policy_list), height, width)
+            i += 1

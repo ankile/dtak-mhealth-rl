@@ -30,13 +30,13 @@ def smallbig_reward(
         reward_dict[i] = latent_cost  # add latent cost
 
     # Put small reward in lower left corner
-    # small_reward_state = (height - 1) * width
-    small_reward_state = 18 * width + 11
+    small_reward_state = (height - 1) * width
+    # small_reward_state = 18 * width + 11
     reward_dict[small_reward_state] = small_reward
 
     # Put big reward in lower right corner
-    # big_reward_state = height * width - 1
-    big_reward_state = 18 * width + 18
+    big_reward_state = height * width - 1
+    # big_reward_state = 18 * width + 18
     reward_dict[big_reward_state] = big_reward
 
     return reward_dict
